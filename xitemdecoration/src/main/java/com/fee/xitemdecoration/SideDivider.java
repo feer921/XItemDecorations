@@ -14,7 +14,22 @@ import android.support.annotation.ColorInt;
  * ******************(^_^)***********************
  */
 public class SideDivider {
-
+    /**
+     * divider边的位置：于左部
+     */
+    public static final int SIDE_POSITION_LEFT = 1;
+    /**
+     * divider边的位置：于上部
+     */
+    public static final int SIDE_POSITION_TOP = 2;
+    /**
+     * divider边的位置：于右部
+     */
+    public static final int SIDE_POSITION_RIGHT = 3;
+    /**
+     * divider边的位置：于底部
+     */
+    public static final int SIDE_POSITION_BOTTOM = 4;
     public SideDivider() {
 
     }
@@ -28,6 +43,10 @@ public class SideDivider {
     }
 
     /**
+     * 当前divider当前边的位置
+     */
+    private int sidePostion;
+    /**
      * divider本边的填充颜色
      * eg.: 0xff00ff00
      */
@@ -39,6 +58,19 @@ public class SideDivider {
      */
     private boolean isNeedDraw;
 
+    /**
+     * 当itemview在列表第一个位置时，本边divider是否需要绘制
+     * def: true; 如果本边是itemview divider的top边，则不应该绘制
+     * 垂直列表时：第一个itemview,如果为【TOP】边，则不应该绘制
+     * 水平列表时：第一个itemview,如果为【LEFT】边，则不应该绘制
+     */
+    private boolean isNeedDrawAt1stPos = true;
+
+    /**
+     * 当itemview在列表的最后位置时，本边divider是否需要绘制
+     * def: false
+     */
+    private boolean isNeedDrawAtLastPos;
     /**
      * divider本边的宽，如果是横向的为高，如果是竖向的为宽
      * 单位：dp
@@ -112,5 +144,58 @@ public class SideDivider {
     public SideDivider withSidePaddingEndDp(float sidePaddingEndDp) {
         this.sidePaddingEndDp = sidePaddingEndDp;
         return this;
+    }
+
+    public SideDivider withNeedDrawAt1stPos(boolean needDrawAt1stPos) {
+        this.isNeedDrawAt1stPos = needDrawAt1stPos;
+        return this;
+    }
+
+    public SideDivider withNeedDrawAtLastPos(boolean needDrawAtLastPos) {
+        this.isNeedDrawAtLastPos = needDrawAtLastPos;
+        return this;
+    }
+
+    public SideDivider withSidePostion(int sidePosition) {
+        this.sidePostion = sidePosition;
+        return this;
+    }
+
+    public boolean isNeedDrawAt1stPos() {
+        return judgeDefNeedDrawAt1stOrLast(true, false);
+//        return isNeedDrawAt1stPos;
+    }
+
+    public boolean isNeedDrawAtLastPos() {
+//        return isNeedDrawAtLastPos;
+        return judgeDefNeedDrawAt1stOrLast(false, true);
+    }
+
+    private boolean judgeDefNeedDrawAt1stOrLast(boolean whenItemAt1st, boolean whenItemAtLast) {
+        if (sidePostion == 0) {//未赋值位置,则返回原来的配置
+            if (whenItemAt1st) {
+                return isNeedDrawAt1stPos;
+            }
+            if (whenItemAtLast) {
+                return isNeedDrawAtLastPos;
+            }
+        }
+        switch (sidePostion) {
+            case SIDE_POSITION_LEFT://divider边在左边，则默认不管是item在列表头还是最后一个都显示/绘制,
+                 break;
+            case SIDE_POSITION_TOP:
+                if (whenItemAt1st) {//在第一个时，不绘制
+                    return false;
+                }
+            case SIDE_POSITION_RIGHT://在右侧时，则，都需要绘制,但横向时(在最后一个位置时)又不需要绘制
+
+                break;
+            case SIDE_POSITION_BOTTOM:
+                if (whenItemAtLast) {
+                    return false;
+                }
+                break;
+        }
+        return true;
     }
 }

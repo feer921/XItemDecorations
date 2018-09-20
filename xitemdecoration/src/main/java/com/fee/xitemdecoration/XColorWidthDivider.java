@@ -39,9 +39,9 @@ public class XColorWidthDivider extends XSidesDividerItemDecoration {
     }
 
     public XColorWidthDivider withDividerColor(@ColorInt int dividerColor) {
-        if (dividerColor > 0) {
+//        if (dividerColor > 0) {
             this.dividerColor = dividerColor;
-        }
+//        }
         return this;
     }
 
@@ -74,7 +74,8 @@ public class XColorWidthDivider extends XSidesDividerItemDecoration {
     @Override
     public XSidesDivider getItemDivider(int itemPosition) {
         SideDivider bottomSideDi = new SideDivider(true, dividerWidthDp, dividerPaddingStartDp, dividerPaddingEndDp, dividerColor);
-        return provideDefXSideDividerBuilder().withBottomSidesDivider(bottomSideDi)
+        return provideDefXSideDividerBuilder()
+                .withBottomSidesDivider(bottomSideDi)
                 .buildXSidesDivider();
     }
 }

@@ -21,7 +21,7 @@ import android.view.View;
  * ******************(^_^)***********************
  */
 public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecoration {
-
+    protected String TAG = getClass().getSimpleName();
     private Paint mPaint;
     private Context context;
 
@@ -30,94 +30,120 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaint.setStyle(Paint.Style.FILL);
     }
+    private static final int INDEX_SIDE_WIDTH = 0x10;
+    private static final int INDEX_PADDING_START = INDEX_SIDE_WIDTH + 1;
+    private static final int INDEX_PADDING_END = INDEX_PADDING_START + 1;
+    private static final int INDEX_SIDE_COLOR = INDEX_PADDING_END + 1;
+
+
 
     @Override
     public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
         //left, top, right, bottom
-        int childCount = parent.getChildCount();
+        int childCount = parent.getChildCount();//注意：这里表示 当前屏幕上(可见区域)的child view
+        int totalItemsCount = 0;
+        RecyclerView.Adapter adapter = parent.getAdapter();
+        if (adapter != null) {
+            totalItemsCount = adapter.getItemCount();
+        }
+        L.i(TAG, "-->onDraw()  childCount = " + childCount + " totalItemsCount = " + totalItemsCount
+//                + " RecyclerView state = " + state
+        );
         for (int i = 0; i < childCount; i++) {
             View child = parent.getChildAt(i);
-            int itemPosition = ((RecyclerView.LayoutParams) child.getLayoutParams()).getViewLayoutPosition();
-            XSidesDivider divider = getItemDivider(itemPosition);
-            int INDEX_SIDE_WIDTH = 0;
-            int INDEX_PADDING_START = 1;
-            int INDEX_PADDING_END = 2;
-            int INDEX_SIDE_COLOR = 3;
+            int itemViewPos = parent.getChildLayoutPosition(child);
+
+//            int itemPosition = ((RecyclerView.LayoutParams) child.getLayoutParams()).getViewLayoutPosition();
+            XSidesDivider divider = getItemDivider(itemViewPos);
+            boolean is1stItem = itemViewPos == 0;
+            boolean isLastItem = (itemViewPos == totalItemsCount - 1);
             if (divider != null) {
                 //左
-                int[] sideDividerInfos = extractSideDividerInfos(divider.getLeftSideDivider());
+                SparseIntArray sideDividerInfos = extractSidesDividerInfos(is1stItem, isLastItem, divider.getLeftSideDivider());
+//                int[] sideDividerInfos = extractSideDividerInfos(divider.getLeftSideDivider());
                 if (sideDividerInfos != null) {
                     drawChildLeftVertical(
                             child,
                             c,
                             parent,
-                            sideDividerInfos[INDEX_SIDE_COLOR],
-                            sideDividerInfos[INDEX_SIDE_WIDTH],
-                            sideDividerInfos[INDEX_PADDING_START],
-                            sideDividerInfos[INDEX_PADDING_END]
-                            );
+                            sideDividerInfos.get(INDEX_SIDE_COLOR),
+                            sideDividerInfos.get(INDEX_SIDE_WIDTH),
+                            sideDividerInfos.get(INDEX_PADDING_START),
+                            sideDividerInfos.get(INDEX_PADDING_END)
+                    );
                 }
                 //上
-                sideDividerInfos = extractSideDividerInfos(divider.getTopSideDivider());
+                sideDividerInfos = extractSidesDividerInfos(is1stItem, isLastItem, divider.getTopSideDivider());
+//                sideDividerInfos = extractSideDividerInfos(divider.getTopSideDivider());
                 if (sideDividerInfos != null) {
                     drawChildTopHorizontal(
                             child,
                             c,
                             parent,
-                            sideDividerInfos[INDEX_SIDE_COLOR],
-                            sideDividerInfos[INDEX_SIDE_WIDTH],
-                            sideDividerInfos[INDEX_PADDING_START],
-                            sideDividerInfos[INDEX_PADDING_END]
+                            sideDividerInfos.get(INDEX_SIDE_COLOR),
+                            sideDividerInfos.get(INDEX_SIDE_WIDTH),
+                            sideDividerInfos.get(INDEX_PADDING_START),
+                            sideDividerInfos.get(INDEX_PADDING_END)
                     );
                 }
                 //右
-                sideDividerInfos = extractSideDividerInfos(divider.getRightSideDivider());
+                sideDividerInfos = extractSidesDividerInfos(is1stItem, isLastItem, divider.getRightSideDivider());
+//                sideDividerInfos = extractSideDividerInfos(divider.getRightSideDivider());
                 if (sideDividerInfos != null) {
                     drawChildRightVertical(
                             child,
                             c,
                             parent,
-                            sideDividerInfos[INDEX_SIDE_COLOR],
-                            sideDividerInfos[INDEX_SIDE_WIDTH],
-                            sideDividerInfos[INDEX_PADDING_START],
-                            sideDividerInfos[INDEX_PADDING_END]
+                            sideDividerInfos.get(INDEX_SIDE_COLOR),
+                            sideDividerInfos.get(INDEX_SIDE_WIDTH),
+                            sideDividerInfos.get(INDEX_PADDING_START),
+                            sideDividerInfos.get(INDEX_PADDING_END)
                     );
                 }
                 //底
-                sideDividerInfos = extractSideDividerInfos(divider.getBottomSideDivider());
+                sideDividerInfos = extractSidesDividerInfos(is1stItem, isLastItem, divider.getBottomSideDivider());
+//                sideDividerInfos = extractSideDividerInfos(divider.getBottomSideDivider());
                 if (sideDividerInfos != null) {
                     drawChildBottomHorizontal(
                             child,
                             c,
                             parent,
-                            sideDividerInfos[INDEX_SIDE_COLOR],
-                            sideDividerInfos[INDEX_SIDE_WIDTH],
-                            sideDividerInfos[INDEX_PADDING_START],
-                            sideDividerInfos[INDEX_PADDING_END]
+                            sideDividerInfos.get(INDEX_SIDE_COLOR),
+                            sideDividerInfos.get(INDEX_SIDE_WIDTH),
+                            sideDividerInfos.get(INDEX_PADDING_START),
+                            sideDividerInfos.get(INDEX_PADDING_END)
                     );
                 }
             }
         }
     }
-
-    /**
-     * int[0] = sideWidthPx
-     * int[1] = sidePaddingStart
-     * int[2] = sidePaddingEnd
-     * int[3] = sideColor
-     * @param theSideDivider 当前可能需要绘制的边divider
-     * @return theSideDivider的需要绘制信息
-     */
-    private int[] extractSideDividerInfos(SideDivider theSideDivider) {
+    private SparseIntArray extractSidesDividerInfos(boolean itemViewAt1st, boolean itemViewAtLast, SideDivider theSideDivider) {
+        SparseIntArray dividerInfos = null;
         if (theSideDivider == null || !theSideDivider.isNeedDraw()) {
             return null;
+        }
+        if (itemViewAt1st) {
+            if (!theSideDivider.isNeedDrawAt1stPos()) {
+                return null;
+            }
+        }
+        if (itemViewAtLast) {
+            if (!theSideDivider.isNeedDrawAtLastPos()) {
+                return null;
+            }
         }
         int sideWidthPx = PxUtil.dp2Px(context, theSideDivider.getSideWidthDp());
         int sidePaddingStart = PxUtil.dp2Px(context, theSideDivider.getSidePaddingStartDp());
         int sidePaddingEnd = PxUtil.dp2Px(context, theSideDivider.getSidePaddingEndDp());
         int sideColor = theSideDivider.getDividerColor();
-        return new int[]{sideWidthPx, sidePaddingStart, sidePaddingEnd, sideColor};
+        dividerInfos = new SparseIntArray(4);
+        dividerInfos.put(INDEX_SIDE_WIDTH, sideWidthPx);
+        dividerInfos.put(INDEX_PADDING_START, sidePaddingStart);
+        dividerInfos.put(INDEX_PADDING_END,sidePaddingEnd);
+        dividerInfos.put(INDEX_SIDE_COLOR, sideColor);
+        return dividerInfos;
     }
+
     private void drawChildBottomHorizontal(View child, Canvas c, RecyclerView parent, @ColorInt int color, int lineWidthPx, int startPaddingPx, int endPaddingPx) {
 
         int leftPadding = 0;
@@ -284,4 +310,95 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
     protected XSidesDividerBuilder provideDefXSideDividerBuilder() {
         return new XSidesDividerBuilder();
     }
+
+
+
+    //    @Override
+//    public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
+//        //left, top, right, bottom
+//        int childCount = parent.getChildCount();
+//        for (int i = 0; i < childCount; i++) {
+//            View child = parent.getChildAt(i);
+//            int itemPosition = ((RecyclerView.LayoutParams) child.getLayoutParams()).getViewLayoutPosition();
+//            XSidesDivider divider = getItemDivider(itemPosition);
+//            int INDEX_SIDE_WIDTH = 0;
+//            int INDEX_PADDING_START = 1;
+//            int INDEX_PADDING_END = 2;
+//            int INDEX_SIDE_COLOR = 3;
+//            if (divider != null) {
+//                //左
+//                int[] sideDividerInfos = extractSideDividerInfos(divider.getLeftSideDivider());
+//                if (sideDividerInfos != null) {
+//                    drawChildLeftVertical(
+//                            child,
+//                            c,
+//                            parent,
+//                            sideDividerInfos[INDEX_SIDE_COLOR],
+//                            sideDividerInfos[INDEX_SIDE_WIDTH],
+//                            sideDividerInfos[INDEX_PADDING_START],
+//                            sideDividerInfos[INDEX_PADDING_END]
+//                            );
+//                }
+//                //上
+//                sideDividerInfos = extractSideDividerInfos(divider.getTopSideDivider());
+//                if (sideDividerInfos != null) {
+//                    drawChildTopHorizontal(
+//                            child,
+//                            c,
+//                            parent,
+//                            sideDividerInfos[INDEX_SIDE_COLOR],
+//                            sideDividerInfos[INDEX_SIDE_WIDTH],
+//                            sideDividerInfos[INDEX_PADDING_START],
+//                            sideDividerInfos[INDEX_PADDING_END]
+//                    );
+//                }
+//                //右
+//                sideDividerInfos = extractSideDividerInfos(divider.getRightSideDivider());
+//                if (sideDividerInfos != null) {
+//                    drawChildRightVertical(
+//                            child,
+//                            c,
+//                            parent,
+//                            sideDividerInfos[INDEX_SIDE_COLOR],
+//                            sideDividerInfos[INDEX_SIDE_WIDTH],
+//                            sideDividerInfos[INDEX_PADDING_START],
+//                            sideDividerInfos[INDEX_PADDING_END]
+//                    );
+//                }
+//                //底
+//                sideDividerInfos = extractSideDividerInfos(divider.getBottomSideDivider());
+//                if (sideDividerInfos != null) {
+//                    drawChildBottomHorizontal(
+//                            child,
+//                            c,
+//                            parent,
+//                            sideDividerInfos[INDEX_SIDE_COLOR],
+//                            sideDividerInfos[INDEX_SIDE_WIDTH],
+//                            sideDividerInfos[INDEX_PADDING_START],
+//                            sideDividerInfos[INDEX_PADDING_END]
+//                    );
+//                }
+//            }
+//        }
+//    }
+
+//    /**
+//     * int[0] = sideWidthPx
+//     * int[1] = sidePaddingStart
+//     * int[2] = sidePaddingEnd
+//     * int[3] = sideColor
+//     * @param theSideDivider 当前可能需要绘制的边divider
+//     * @return theSideDivider的需要绘制信息
+//     */
+//    private int[] extractSideDividerInfos(SideDivider theSideDivider) {
+//        if (theSideDivider == null || !theSideDivider.isNeedDraw()) {
+//            return null;
+//        }
+//        int sideWidthPx = PxUtil.dp2Px(context, theSideDivider.getSideWidthDp());
+//        int sidePaddingStart = PxUtil.dp2Px(context, theSideDivider.getSidePaddingStartDp());
+//        int sidePaddingEnd = PxUtil.dp2Px(context, theSideDivider.getSidePaddingEndDp());
+//        int sideColor = theSideDivider.getDividerColor();
+//        return new int[]{sideWidthPx, sidePaddingStart, sidePaddingEnd, sideColor};
+//    }
+
 }
