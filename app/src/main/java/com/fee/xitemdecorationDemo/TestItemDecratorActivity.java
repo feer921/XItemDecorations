@@ -6,7 +6,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
+import com.fee.xitemdecoration.SideDivider;
 import com.fee.xitemdecoration.XColorWidthDivider;
+import com.fee.xitemdecoration.XSidesDivider;
 
 /**
  * ******************(^_^)***********************<br>
@@ -25,10 +27,19 @@ public class TestItemDecratorActivity extends AppCompatActivity {
         setContentView(R.layout.activity_recyclerview);
         RecyclerView recyclerView = findViewById(R.id.recyclerview);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-        XColorWidthDivider divider = new XColorWidthDivider(this);
+        XColorWidthDivider divider = new XColorWidthDivider(this){
+            @Nullable
+            @Override
+            public XSidesDivider getItemDivider(int itemPosition) {
+                SideDivider rightSideDivider = new SideDivider(true, 5, 0, 0, 0xff0000ff);
+                XSidesDivider xSidesDivider  = super.getItemDivider(itemPosition).withRightSideDivider(rightSideDivider);
+                return xSidesDivider;
+            }
+        };
         divider.withDividerColor(0xff00ff00)
                 .withDividerWidthDp(5)
         ;
+        divider.setDebugLog(true);
         recyclerView.addItemDecoration(divider);
         TestAdapter adapter = new TestAdapter();
         adapter.setDatas(createDatas(20));

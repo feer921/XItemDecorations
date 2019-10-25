@@ -7,6 +7,7 @@ import android.graphics.Rect;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
+import android.util.SparseArray;
 import android.util.SparseIntArray;
 import android.view.View;
 
@@ -24,6 +25,16 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
     protected String TAG = getClass().getSimpleName();
     private Paint mPaint;
     private Context context;
+    private SparseArray<XSidesDivider> xSidesDividerMapItemPosition = new SparseArray<>();
+
+    private boolean isDebugLog = false;
+
+
+    /**
+     * 是否可重用XSideDivider
+     * def:true
+     */
+    protected boolean isCanUseCacheXSidesDivider = true;
 
     public XSidesDividerItemDecoration(Context context) {
         this.context = context;
@@ -36,7 +47,15 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
     private static final int INDEX_SIDE_COLOR = INDEX_PADDING_END + 1;
 
 
-
+    /**
+     * Draw any appropriate decorations into the Canvas supplied to the RecyclerView.
+     * Any content drawn by this method will be drawn before the item views are drawn,
+     * and will thus appear underneath the views.
+     * 该方法的回调表示：该方法所绘制的内容会在 itemView的绘制之前绘制的，所以所绘制的内容会在 itemView的下面
+     * @param c Canvas to draw into
+     * @param parent RecyclerView this ItemDecoration is drawing into
+     * @param state The current state of RecyclerView
+     */
     @Override
     public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
         //left, top, right, bottom
@@ -46,15 +65,17 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         if (adapter != null) {
             totalItemsCount = adapter.getItemCount();
         }
-        L.i(TAG, "-->onDraw()  childCount = " + childCount + " totalItemsCount = " + totalItemsCount
+        if (isDebugLog) {
+            L.i(TAG, "-->onDraw()  childCount = " + childCount + " totalItemsCount = " + totalItemsCount
 //                + " RecyclerView state = " + state
-        );
+            );
+        }
         for (int i = 0; i < childCount; i++) {
             View child = parent.getChildAt(i);
             int itemViewPos = parent.getChildLayoutPosition(child);
 
 //            int itemPosition = ((RecyclerView.LayoutParams) child.getLayoutParams()).getViewLayoutPosition();
-            XSidesDivider divider = getItemDivider(itemViewPos);
+            XSidesDivider divider = providerItemDivider(itemViewPos);
             boolean is1stItem = itemViewPos == 0;
             boolean isLastItem = (itemViewPos == totalItemsCount - 1);
             if (divider != null) {
@@ -271,7 +292,7 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
 
         int itemPosition = ((RecyclerView.LayoutParams) view.getLayoutParams()).getViewLayoutPosition();
 
-        XSidesDivider divider = getItemDivider(itemPosition);
+        XSidesDivider divider = providerItemDivider(itemPosition);
 
         if (divider == null) {
             divider = provideDefXSideDividerBuilder().buildXSidesDivider();
@@ -287,7 +308,11 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
 
         bottom = gainTheSideDividerWithPx(divider.getBottomSideDivider());
 
+        Rect srcRect = new Rect(outRect);
         outRect.set(left, top, right, bottom);
+        if (isDebugLog) {
+            L.d(TAG, "-->getItemOffsets() srcRect = " + srcRect + " cur rect = " + outRect);
+        }
     }
 
     private int gainTheSideDividerWithPx(SideDivider curSideDivider) {
@@ -303,6 +328,26 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
      */
     public abstract @Nullable XSidesDivider getItemDivider(int itemPosition);
 
+    /**
+     * 提供当前itemView 的 各边Divider
+     * 此方法子类也可以重写掉
+     * 注：先去缓存里找有没有对应的XSidesDivider
+     * @param curItemPosition 当前RecyclerView中的itemView
+     * @return XSidesDivider
+     */
+    protected XSidesDivider providerItemDivider(int curItemPosition) {
+        XSidesDivider xSidesDivider = null;
+        if (xSidesDividerMapItemPosition != null && isCanUseCacheXSidesDivider) {
+            xSidesDivider = xSidesDividerMapItemPosition.get(curItemPosition);
+        }
+        if (xSidesDivider == null) {
+            xSidesDivider = getItemDivider(curItemPosition);
+            if (isCanUseCacheXSidesDivider) {
+                xSidesDividerMapItemPosition.put(curItemPosition, xSidesDivider);
+            }
+        }
+        return xSidesDivider;
+    }
     /**
      * 提供一个默认的XSideDividerBuilder来创建XSideDivider,以免为空
      * @return
@@ -401,4 +446,11 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
 //        return new int[]{sideWidthPx, sidePaddingStart, sidePaddingEnd, sideColor};
 //    }
 
+    public void setCanUseCacheXSidesDivider(boolean canUseCacheXSidesDivider) {
+        this.isCanUseCacheXSidesDivider = canUseCacheXSidesDivider;
+    }
+
+    public void setDebugLog(boolean isDebugLog) {
+        this.isDebugLog = isDebugLog;
+    }
 }
