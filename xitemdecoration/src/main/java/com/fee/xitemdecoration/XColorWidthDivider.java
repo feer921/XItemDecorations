@@ -1,5 +1,6 @@
 package com.fee.xitemdecoration;
 
+import android.content.Context;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Nullable;
 
@@ -10,11 +11,17 @@ import android.support.annotation.Nullable;
  * Time: 20:55<br>
  * <P>DESC:
  * 可定义不同的divider颜色和宽度的默认为底部的divider
- * 注：默认为0xffdddddd颜色
+ * 注：默认为0透明颜色
  * </p>
  * ******************(^_^)***********************
  */
 public class XColorWidthDivider extends XSidesDividerItemDecoration {
+    public XColorWidthDivider() {
+    }
+
+    public XColorWidthDivider(Context context) {
+        super(context);
+    }
     /**
      * Divider 的默认绘制颜色
      * def:透明
