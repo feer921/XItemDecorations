@@ -3,9 +3,10 @@ package com.fee.xitemdecorationDemo;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
+import com.fee.xitemdecoration.GridItemDivider;
 import com.fee.xitemdecoration.SideDivider;
 import com.fee.xitemdecoration.XColorWidthDivider;
 import com.fee.xitemdecoration.XSidesDivider;
@@ -26,23 +27,41 @@ public class TestItemDecratorActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recyclerview);
         RecyclerView recyclerView = findViewById(R.id.recyclerview);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-        XColorWidthDivider divider = new XColorWidthDivider(this){
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
+        recyclerView.setLayoutManager(gridLayoutManager);
+//        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        XColorWidthDivider divider = new XColorWidthDivider(){
             @Nullable
             @Override
             public XSidesDivider getItemDivider(int itemPosition) {
                 SideDivider rightSideDivider = new SideDivider(true, 5, 0, 0, 0xff0000ff);
-                XSidesDivider xSidesDivider  = super.getItemDivider(itemPosition).withRightSideDivider(rightSideDivider);
+                XSidesDivider xSidesDivider  = super.getItemDivider(itemPosition)
+                        .withRightSideDivider(rightSideDivider);
                 return xSidesDivider;
             }
+
+
+
         };
         divider.withDividerColor(0xff00ff00)
-                .withDividerWidthDp(5)
+                .withDividerWidthValue(15)
         ;
-        divider.setDebugLog(true);
-        recyclerView.addItemDecoration(divider);
+        divider.setDebugLog(true)
+            .setNeedConsiderItemViewMargin(false)
+            .setNeedFillDividerCrossGap(false)
+        ;
+        GridItemDivider gridItemDivider = new GridItemDivider(2);
+        gridItemDivider.withDividerColor(0xff00ff00)
+                .withDividerWidthValue(15)
+                .letSideValueUseDpValue(false)
+                ;
+        recyclerView.addItemDecoration(gridItemDivider);
+//        recyclerView.addItemDecoration(divider);
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration();
+//        recyclerView.addItemDecoration(dividerItemDecoration);
+
         TestAdapter adapter = new TestAdapter();
-        adapter.setDatas(createDatas(20));
+        adapter.setDatas(createDatas(6));
         recyclerView.setAdapter(adapter);
     }
 

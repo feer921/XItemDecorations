@@ -36,8 +36,34 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
      */
     protected boolean isCanUseCacheXSidesDivider = true;
 
+    /**
+     * 在绘制各边的divider时是否要考虑当前[ItemView]的布局参数的 [margin] 边距
+     * 即效果为 |  [ItemView] 则divider示意为
+     *         ~~~~~~~~~~~~~
+     * def: true,如果为false时，则divider为紧贴ItemView各边
+     */
+    protected boolean isNeedConsiderItemViewMargin = true;
+
+    /**
+     * 在绘制ItemView 的左、上、右、底 边的Divider时，如果左和上、底相交
+     * 或者如果右边和上、底相交，是否需要填充掉
+     */
+    protected boolean isNeedFillDividersCrossGap = true;
+
+    /**
+     * 所绘制的边的宽/高、缩进的值的单位是否使用DP为单位
+     * def:使用DP为单位
+     * false:使用px像素为单位
+     */
+    protected boolean isSideValuesUseDpUnit = true;
+
     public XSidesDividerItemDecoration(Context context) {
         this.context = context;
+        mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mPaint.setStyle(Paint.Style.FILL);
+    }
+
+    public XSidesDividerItemDecoration() {
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaint.setStyle(Paint.Style.FILL);
     }
@@ -46,6 +72,46 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
     private static final int INDEX_PADDING_END = INDEX_PADDING_START + 1;
     private static final int INDEX_SIDE_COLOR = INDEX_PADDING_END + 1;
 
+    @Override
+    public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
+        super.getItemOffsets(outRect,view,parent,state);
+        if (context == null) {
+            context = view.getContext();
+            if (context != null) {
+                context = context.getApplicationContext();
+            }
+        }
+        //outRect 看源码可知这里只是把Rect类型的outRect作为一个封装了left,right,top,bottom的数据结构,
+        //作为传递left,right,top,bottom的偏移值来用的
+        int itemInAdapterPosition = parent.getChildAdapterPosition(view);
+        int childLayoutPosition = parent.getChildLayoutPosition(view);
+        if (isDebugLog) {
+            L.d(TAG, "-->getItemOffsets() itemInAdapterPosition = " + itemInAdapterPosition + " childLayoutPosition = " + childLayoutPosition);
+        }
+        int itemPosition = ((RecyclerView.LayoutParams) view.getLayoutParams()).getViewLayoutPosition();
+
+        XSidesDivider divider = providerItemDivider(itemPosition);
+
+        if (divider == null) {
+            divider = provideDefXSideDividerBuilder().buildXSidesDivider();
+        }
+
+        int left = 0, top = 0, right = 0, bottom = 0;
+
+        left = gainTheSideDividerWithPx(divider.getLeftSideDivider());
+
+        top = gainTheSideDividerWithPx(divider.getTopSideDivider());
+
+        right = gainTheSideDividerWithPx(divider.getRightSideDivider());
+
+        bottom = gainTheSideDividerWithPx(divider.getBottomSideDivider());
+
+        Rect srcRect = new Rect(outRect);
+        outRect.set(left, top, right, bottom);
+        if (isDebugLog) {
+            L.d(TAG, "-->getItemOffsets() srcRect = " + srcRect + " cur rect = " + outRect);
+        }
+    }
 
     /**
      * Draw any appropriate decorations into the Canvas supplied to the RecyclerView.
@@ -58,28 +124,36 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
      */
     @Override
     public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
+        super.onDraw(c,parent,state);
+        if (context == null) {
+            context = parent.getContext();
+            if (context != null) {
+                context.getApplicationContext();
+            }
+        }
         //left, top, right, bottom
-        int childCount = parent.getChildCount();//注意：这里表示 当前屏幕上(可见区域)的child view
+        int visibleChildCount = parent.getChildCount();//注意：这里表示 当前屏幕上(可见区域)的child view
         int totalItemsCount = 0;
         RecyclerView.Adapter adapter = parent.getAdapter();
         if (adapter != null) {
             totalItemsCount = adapter.getItemCount();
         }
         if (isDebugLog) {
-            L.i(TAG, "-->onDraw()  childCount = " + childCount + " totalItemsCount = " + totalItemsCount
-//                + " RecyclerView state = " + state
+            L.i(TAG, "-->onDraw()  childCount = " + visibleChildCount + " totalItemsCount = " + totalItemsCount
+                + " RecyclerView state = " + state
             );
         }
-        for (int i = 0; i < childCount; i++) {
+        for (int i = 0; i < visibleChildCount; i++) {
             View child = parent.getChildAt(i);
-            int itemViewPos = parent.getChildLayoutPosition(child);
+            int itemViewPos = parent.getChildAdapterPosition(child);
+//            int itemViewPos = parent.getChildLayoutPosition(child);
 
 //            int itemPosition = ((RecyclerView.LayoutParams) child.getLayoutParams()).getViewLayoutPosition();
             XSidesDivider divider = providerItemDivider(itemViewPos);
             boolean is1stItem = itemViewPos == 0;
             boolean isLastItem = (itemViewPos == totalItemsCount - 1);
             if (divider != null) {
-                //左
+                //左 todo ??这个也可以缓存??
                 SparseIntArray sideDividerInfos = extractSidesDividerInfos(is1stItem, isLastItem, divider.getLeftSideDivider());
 //                int[] sideDividerInfos = extractSideDividerInfos(divider.getLeftSideDivider());
                 if (sideDividerInfos != null) {
@@ -153,9 +227,13 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
                 return null;
             }
         }
-        int sideWidthPx = PxUtil.dp2Px(context, theSideDivider.getSideWidthDp());
-        int sidePaddingStart = PxUtil.dp2Px(context, theSideDivider.getSidePaddingStartDp());
-        int sidePaddingEnd = PxUtil.dp2Px(context, theSideDivider.getSidePaddingEndDp());
+        boolean isSideValueUseDpUnit = theSideDivider.isActiveSetValueUnit() ? theSideDivider.isSideValuesUseDpUnit() : isSideValuesUseDpUnit;
+        float sideWithValue = theSideDivider.getSideWidthValue();
+        int sideWidthPx = isSideValueUseDpUnit ? PxUtil.dp2Px(context, sideWithValue) : (int) sideWithValue;
+        float sidePaddingStartValue = theSideDivider.getSidePaddingStartValue();
+        int sidePaddingStart = isSideValueUseDpUnit ? PxUtil.dp2Px(context, sidePaddingStartValue) : (int) sidePaddingStartValue;
+        float sidePaddingEndValue = theSideDivider.getSidePaddingEndValue();
+        int sidePaddingEnd = isSideValueUseDpUnit ? PxUtil.dp2Px(context, sidePaddingEndValue) : (int) sidePaddingEndValue;
         int sideColor = theSideDivider.getDividerColor();
         dividerInfos = new SparseIntArray(4);
         dividerInfos.put(INDEX_SIDE_WIDTH, sideWidthPx);
@@ -165,78 +243,34 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         return dividerInfos;
     }
 
-    private void drawChildBottomHorizontal(View child, Canvas c, RecyclerView parent, @ColorInt int color, int lineWidthPx, int startPaddingPx, int endPaddingPx) {
+    protected static final int DIVIDER_POS_LEFT = 1;
+    protected static final int DIVIDER_POS_TOP = 2;
+    protected static final int DIVIDER_POS_RIGHT = 3;
+    protected static final int DIVIDER_POS_BOTTTOM = 4;
 
-        int leftPadding = 0;
-        int rightPadding = 0;
-
-        if (startPaddingPx <= 0) {
-            //padding<0当作==0处理
-            //上下左右默认分割线的两头都出头一个分割线的宽度，避免十字交叉的时候，交叉点是空白
-            leftPadding = -lineWidthPx;
-        } else {
-            leftPadding = startPaddingPx;
-        }
-
-        if (endPaddingPx <= 0) {
-            rightPadding = lineWidthPx;
-        } else {
-            rightPadding = -endPaddingPx;
-        }
-
-        RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child
-                .getLayoutParams();
-        int left = child.getLeft() - params.leftMargin + leftPadding;
-        int right = child.getRight() + params.rightMargin + rightPadding;
-        int top = child.getBottom() + params.bottomMargin;
-        int bottom = top + lineWidthPx;
-        mPaint.setColor(color);
-
-        c.drawRect(left, top, right, bottom, mPaint);
-
-    }
-
-    private void drawChildTopHorizontal(View child, Canvas c, RecyclerView parent, @ColorInt int color, int lineWidthPx, int startPaddingPx, int endPaddingPx) {
-        int leftPadding = 0;
-        int rightPadding = 0;
-
-        if (startPaddingPx <= 0) {
-            //padding<0当作==0处理
-            //上下左右默认分割线的两头都出头一个分割线的宽度，避免十字交叉的时候，交叉点是空白
-            leftPadding = -lineWidthPx;
-        } else {
-            leftPadding = startPaddingPx;
-        }
-        if (endPaddingPx <= 0) {
-            rightPadding = lineWidthPx;
-        } else {
-            rightPadding = -endPaddingPx;
-        }
-
-        RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child
-                .getLayoutParams();
-        int left = child.getLeft() - params.leftMargin + leftPadding;
-        int right = child.getRight() + params.rightMargin + rightPadding;
-        int bottom = child.getTop() - params.topMargin;
-        int top = bottom - lineWidthPx;
-        mPaint.setColor(color);
-
-        c.drawRect(left, top, right, bottom, mPaint);
-
-    }
-
-    private void drawChildLeftVertical(View child, Canvas c, RecyclerView parent, @ColorInt int color, int lineWidthPx, int startPaddingPx, int endPaddingPx) {
+    /**
+     * 绘制 ItemView 左侧的divider 矩形
+     * @param child 当前 ItemView
+     * @param c 画布
+     * @param parent RecyclerView
+     * @param color 画笔颜色
+     * @param lineWidthPx 要绘制的空间
+     * @param startPaddingPx 矩形Divider 左边距
+     * @param endPaddingPx 矩形Divider 右边距
+     */
+    private void drawChildLeftVertical(View child, Canvas c, RecyclerView parent, @ColorInt int color, int lineWidthPx,
+                                       int startPaddingPx, int endPaddingPx) {
         int topPadding = 0;
         int bottomPadding = 0;
 
-        if (startPaddingPx <= 0) {
+        if (startPaddingPx <= 0 && isNeedFillDividersCrossGap) {
             //padding<0当作==0处理
             //上下左右默认分割线的两头都出头一个分割线的宽度，避免十字交叉的时候，交叉点是空白
             topPadding = -lineWidthPx;
         } else {
             topPadding = startPaddingPx;
         }
-        if (endPaddingPx <= 0) {
+        if (endPaddingPx <= 0 && isNeedFillDividersCrossGap) {
             bottomPadding = lineWidthPx;
         } else {
             bottomPadding = -endPaddingPx;
@@ -244,29 +278,110 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
 
         RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child
                 .getLayoutParams();
-        int top = child.getTop() - params.topMargin + topPadding;
-        int bottom = child.getBottom() + params.bottomMargin + bottomPadding;
-        int right = child.getLeft() - params.leftMargin;
+        int top = child.getTop() + topPadding;
+        if (isNeedConsiderItemViewMargin) {
+            top -= params.topMargin;
+        }
+        int bottom = child.getBottom() + bottomPadding;
+        if (isNeedConsiderItemViewMargin) {
+            bottom += params.bottomMargin;
+        }
+        int right = child.getLeft();
+        if (isNeedConsiderItemViewMargin) {
+            right -= params.leftMargin;
+        }
+
         int left = right - lineWidthPx;
         mPaint.setColor(color);
-
+        Rect drawRect = new Rect(left, top, right, bottom);
+        boolean isInterceptedDraw = interceptDrawItemViewDividers(DIVIDER_POS_LEFT, child, c, parent, drawRect);
+        if (isInterceptedDraw) {
+            return;
+        }
         c.drawRect(left, top, right, bottom, mPaint);
-
+        extraDrawItemViewDividers(DIVIDER_POS_LEFT, child, c, parent, drawRect);
     }
 
-    private void drawChildRightVertical(View child, Canvas c, RecyclerView parent, @ColorInt int color, int lineWidthPx, int startPaddingPx, int endPaddingPx) {
+
+
+    /**
+     * 绘制 ItemView 顶部的divider 矩形
+     * @param child 当前 ItemView
+     * @param c 画布
+     * @param parent RecyclerView
+     * @param color 画笔颜色
+     * @param lineWidthPx 要绘制的空间
+     * @param startPaddingPx 矩形Divider 左边距
+     * @param endPaddingPx 矩形Divider 右边距
+     */
+    private void drawChildTopHorizontal(View child, Canvas c, RecyclerView parent, @ColorInt int color, int lineWidthPx,
+                                        int startPaddingPx, int endPaddingPx) {
+        int leftPadding = 0;
+        int rightPadding = 0;
+
+        if (startPaddingPx <= 0 && isNeedFillDividersCrossGap) {
+            //padding<0当作==0处理
+            //上下左右默认分割线的两头都出头一个分割线的宽度，避免十字交叉的时候，交叉点是空白
+            leftPadding = -lineWidthPx;
+        } else {
+            leftPadding = startPaddingPx;
+        }
+        if (endPaddingPx <= 0 && isNeedFillDividersCrossGap) {
+            rightPadding = lineWidthPx;
+        } else {
+            rightPadding = -endPaddingPx;
+        }
+
+        RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child
+                .getLayoutParams();
+        int left = child.getLeft() + leftPadding;
+        if (isNeedConsiderItemViewMargin) {
+            left -= params.leftMargin;
+        }
+
+        int top = child.getTop() - lineWidthPx;//要在ItemView 的top还要往Y轴负方向偏移 矩形高度
+        if (isNeedConsiderItemViewMargin) {
+            top -= params.topMargin;
+        }
+        int right = child.getRight() + rightPadding;
+        if (isNeedConsiderItemViewMargin) {
+            right += params.rightMargin;
+        }
+        int bottom = top + lineWidthPx;
+        mPaint.setColor(color);
+        Rect drawRect = new Rect(left, top, right, bottom);
+        boolean isIntercepted = interceptDrawItemViewDividers(DIVIDER_POS_TOP, child, c, parent, drawRect);
+        if (isIntercepted) {
+            return;
+        }
+        c.drawRect(left, top, right, bottom, mPaint);
+        extraDrawItemViewDividers(DIVIDER_POS_TOP, child, c, parent, drawRect);
+    }
+
+    /**
+     * 绘制 ItemView 右侧的divider 矩形
+     * @param child 当前 ItemView
+     * @param c 画布
+     * @param parent RecyclerView
+     * @param color 画笔颜色
+     * @param lineWidthPx 要绘制的空间
+     * @param startPaddingPx 矩形Divider 左边距
+     * @param endPaddingPx 矩形Divider 右边距
+     */
+    private void drawChildRightVertical(View child, Canvas c, RecyclerView parent, @ColorInt int color, int lineWidthPx,
+                                        int startPaddingPx, int endPaddingPx) {
 
         int topPadding = 0;
         int bottomPadding = 0;
 
-        if (startPaddingPx <= 0) {
+        if (startPaddingPx <= 0 && isNeedFillDividersCrossGap) {
             //padding<0当作==0处理
             //上下左右默认分割线的两头都出头一个分割线的宽度，避免十字交叉的时候，交叉点是空白
             topPadding = -lineWidthPx;
         } else {
             topPadding = startPaddingPx;
         }
-        if (endPaddingPx <= 0) {
+        if (endPaddingPx <= 0 && isNeedFillDividersCrossGap) {
             bottomPadding = lineWidthPx;
         } else {
             bottomPadding = -endPaddingPx;
@@ -274,50 +389,135 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
 
         RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child
                 .getLayoutParams();
-        int top = child.getTop() - params.topMargin + topPadding;
-        int bottom = child.getBottom() + params.bottomMargin + bottomPadding;
-        int left = child.getRight() + params.rightMargin;
+        int left = child.getRight();
+        if (isNeedConsiderItemViewMargin) {
+            left += params.rightMargin;
+        }
+        int top = child.getTop() + topPadding;
+        if (isNeedConsiderItemViewMargin) {
+            top -= params.topMargin;
+        }
         int right = left + lineWidthPx;
+        int bottom = child.getBottom() + bottomPadding;
+        if (isNeedConsiderItemViewMargin) {
+            bottom += params.bottomMargin;
+        }
         mPaint.setColor(color);
-
+        Rect drawRect = new Rect(left, top, right, bottom);
+        boolean isIntercepted = interceptDrawItemViewDividers(DIVIDER_POS_RIGHT, child, c, parent, drawRect);
+        if (isIntercepted) {
+            return;
+        }
         c.drawRect(left, top, right, bottom, mPaint);
-
+        extraDrawItemViewDividers(DIVIDER_POS_RIGHT, child, c, parent, drawRect);
     }
 
-    @Override
-    public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
+    /**
+     * 绘制itemView底部的divider 矩形
+     * @param child 当前 ItemView
+     * @param c 画布
+     * @param parent RecyclerView
+     * @param color 画笔颜色
+     * @param lineWidthPx 要绘制的空间
+     * @param startPaddingPx 矩形Divider 左边距
+     * @param endPaddingPx 矩形Divider 右边距
+     */
+    private void drawChildBottomHorizontal(View child, Canvas c, RecyclerView parent, @ColorInt int color, int lineWidthPx,
+                                           int startPaddingPx, int endPaddingPx) {
+        int leftPadding = 0;
+        int rightPadding = 0;
 
-        //outRect 看源码可知这里只是把Rect类型的outRect作为一个封装了left,right,top,bottom的数据结构,
-        //作为传递left,right,top,bottom的偏移值来用的
-
-        int itemPosition = ((RecyclerView.LayoutParams) view.getLayoutParams()).getViewLayoutPosition();
-
-        XSidesDivider divider = providerItemDivider(itemPosition);
-
-        if (divider == null) {
-            divider = provideDefXSideDividerBuilder().buildXSidesDivider();
+        if (startPaddingPx <= 0 && isNeedFillDividersCrossGap) {
+            //padding<0当作==0处理
+            //上下左右默认分割线的两头都出头一个分割线的宽度，避免十字交叉的时候，交叉点是空白
+            leftPadding = -lineWidthPx;
+        } else {
+            leftPadding = startPaddingPx;
         }
 
-        int left = 0, top = 0, right = 0, bottom = 0;
-
-        left = gainTheSideDividerWithPx(divider.getLeftSideDivider());
-
-        top = gainTheSideDividerWithPx(divider.getTopSideDivider());
-
-        right = gainTheSideDividerWithPx(divider.getRightSideDivider());
-
-        bottom = gainTheSideDividerWithPx(divider.getBottomSideDivider());
-
-        Rect srcRect = new Rect(outRect);
-        outRect.set(left, top, right, bottom);
-        if (isDebugLog) {
-            L.d(TAG, "-->getItemOffsets() srcRect = " + srcRect + " cur rect = " + outRect);
+        if (endPaddingPx <= 0 && isNeedFillDividersCrossGap) {
+            rightPadding = lineWidthPx;
+        } else {
+            rightPadding = -endPaddingPx;
         }
+
+        RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child
+                .getLayoutParams();
+        int childLeft = child.getLeft();
+        int left;
+        if (isNeedConsiderItemViewMargin) {
+            left = childLeft - params.leftMargin + leftPadding;//表示如果ItemView有左外边距，则Divider的left边要向左偏移 边距的距离,其实呢？child.getLeft()就是margin的值
+            //等效于
+//            left = leftPadding;
+        }
+        else {
+            left = childLeft + leftPadding;
+        }
+
+        int top = child.getBottom();
+        if (isNeedConsiderItemViewMargin) {
+            top += params.bottomMargin;
+        }
+        int right = child.getRight() + rightPadding;
+        if (isNeedConsiderItemViewMargin) {
+            right += params.rightMargin;
+        }
+
+        int bottom = top + lineWidthPx;
+        mPaint.setColor(color);
+        Rect drawRect = new Rect(left, top, right, bottom);
+        //是否拦截绘制ItemView的底部 divider
+        boolean interceptedDraw = interceptDrawItemViewDividers(DIVIDER_POS_BOTTTOM,child, c, parent, drawRect);
+        if (interceptedDraw) {
+            return;
+        }
+        //不拦截的话，默认绘制一个矩形
+        c.drawRect(left, top, right, bottom, mPaint);
+        extraDrawItemViewDividers(DIVIDER_POS_BOTTTOM, child, c, parent, drawRect);
     }
 
+    /**
+     * 拦截绘制当前ItemView的某边Divider信息
+     * 如果拦截了,则本类不对某边进行默认的矩形绘制
+     * @param dividerPosition Divider的方位 参见:
+     *                        <ul><li>{@link #DIVIDER_POS_LEFT}</li></ul>
+     *                        <ul><li>{@link #DIVIDER_POS_TOP}</li></ul>
+     *                        <ul><li>{@link #DIVIDER_POS_RIGHT}</li></ul>
+     *                        <ul><li>{@link #DIVIDER_POS_BOTTTOM}</li></ul>
+     * @param child 当前的ItemView
+     * @param c 画布
+     * @param parent 当前的RecyclerView
+     * @param curDividerSpaceRect 当前边可绘制的矩形区域
+     * @return true:拦截了，则本父类不进行默认的矩形绘制；false:不拦截
+     */
+    protected boolean interceptDrawItemViewDividers(int dividerPosition, View child, Canvas c, RecyclerView parent, Rect curDividerSpaceRect) {
+        return false;
+    }
+
+    /**
+     * 额外绘制当前ItemView的某边Divider信息
+     * 即在本父类对某边进行默认的矩形绘制后，子类还想绘制相关的内容
+     * @param dividerPosition Divider的方位 参见:
+     *                        <ul><li>{@link #DIVIDER_POS_LEFT}</li></ul>
+     *                        <ul><li>{@link #DIVIDER_POS_TOP}</li></ul>
+     *                        <ul><li>{@link #DIVIDER_POS_RIGHT}</li></ul>
+     *                        <ul><li>{@link #DIVIDER_POS_BOTTTOM}</li></ul>
+     * @param child 当前的ItemView
+     * @param c 画布
+     * @param parent 当前的RecyclerView
+     * @param curDividerSpaceRect 当前边可绘制的矩形区域
+     */
+    protected void extraDrawItemViewDividers(int dividerPosition, View child, Canvas c, RecyclerView parent, Rect curDividerSpaceRect){
+        //here do nothing...
+    }
     private int gainTheSideDividerWithPx(SideDivider curSideDivider) {
         if (curSideDivider != null && curSideDivider.isNeedDraw()) {
-            return PxUtil.dp2Px(context, curSideDivider.getSideWidthDp());
+            float sideWidthValue = curSideDivider.getSideWidthValue();
+            boolean isSideValueUseDpUnit = curSideDivider.isActiveSetValueUnit() ? curSideDivider.isSideValuesUseDpUnit() : isSideValuesUseDpUnit;
+            if (isSideValueUseDpUnit) {
+                return PxUtil.dp2Px(context, sideWidthValue);
+            }
+            return (int) sideWidthValue;
         }
         return 0;
     }
@@ -358,99 +558,29 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
 
 
 
-    //    @Override
-//    public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
-//        //left, top, right, bottom
-//        int childCount = parent.getChildCount();
-//        for (int i = 0; i < childCount; i++) {
-//            View child = parent.getChildAt(i);
-//            int itemPosition = ((RecyclerView.LayoutParams) child.getLayoutParams()).getViewLayoutPosition();
-//            XSidesDivider divider = getItemDivider(itemPosition);
-//            int INDEX_SIDE_WIDTH = 0;
-//            int INDEX_PADDING_START = 1;
-//            int INDEX_PADDING_END = 2;
-//            int INDEX_SIDE_COLOR = 3;
-//            if (divider != null) {
-//                //左
-//                int[] sideDividerInfos = extractSideDividerInfos(divider.getLeftSideDivider());
-//                if (sideDividerInfos != null) {
-//                    drawChildLeftVertical(
-//                            child,
-//                            c,
-//                            parent,
-//                            sideDividerInfos[INDEX_SIDE_COLOR],
-//                            sideDividerInfos[INDEX_SIDE_WIDTH],
-//                            sideDividerInfos[INDEX_PADDING_START],
-//                            sideDividerInfos[INDEX_PADDING_END]
-//                            );
-//                }
-//                //上
-//                sideDividerInfos = extractSideDividerInfos(divider.getTopSideDivider());
-//                if (sideDividerInfos != null) {
-//                    drawChildTopHorizontal(
-//                            child,
-//                            c,
-//                            parent,
-//                            sideDividerInfos[INDEX_SIDE_COLOR],
-//                            sideDividerInfos[INDEX_SIDE_WIDTH],
-//                            sideDividerInfos[INDEX_PADDING_START],
-//                            sideDividerInfos[INDEX_PADDING_END]
-//                    );
-//                }
-//                //右
-//                sideDividerInfos = extractSideDividerInfos(divider.getRightSideDivider());
-//                if (sideDividerInfos != null) {
-//                    drawChildRightVertical(
-//                            child,
-//                            c,
-//                            parent,
-//                            sideDividerInfos[INDEX_SIDE_COLOR],
-//                            sideDividerInfos[INDEX_SIDE_WIDTH],
-//                            sideDividerInfos[INDEX_PADDING_START],
-//                            sideDividerInfos[INDEX_PADDING_END]
-//                    );
-//                }
-//                //底
-//                sideDividerInfos = extractSideDividerInfos(divider.getBottomSideDivider());
-//                if (sideDividerInfos != null) {
-//                    drawChildBottomHorizontal(
-//                            child,
-//                            c,
-//                            parent,
-//                            sideDividerInfos[INDEX_SIDE_COLOR],
-//                            sideDividerInfos[INDEX_SIDE_WIDTH],
-//                            sideDividerInfos[INDEX_PADDING_START],
-//                            sideDividerInfos[INDEX_PADDING_END]
-//                    );
-//                }
-//            }
-//        }
-//    }
 
-//    /**
-//     * int[0] = sideWidthPx
-//     * int[1] = sidePaddingStart
-//     * int[2] = sidePaddingEnd
-//     * int[3] = sideColor
-//     * @param theSideDivider 当前可能需要绘制的边divider
-//     * @return theSideDivider的需要绘制信息
-//     */
-//    private int[] extractSideDividerInfos(SideDivider theSideDivider) {
-//        if (theSideDivider == null || !theSideDivider.isNeedDraw()) {
-//            return null;
-//        }
-//        int sideWidthPx = PxUtil.dp2Px(context, theSideDivider.getSideWidthDp());
-//        int sidePaddingStart = PxUtil.dp2Px(context, theSideDivider.getSidePaddingStartDp());
-//        int sidePaddingEnd = PxUtil.dp2Px(context, theSideDivider.getSidePaddingEndDp());
-//        int sideColor = theSideDivider.getDividerColor();
-//        return new int[]{sideWidthPx, sidePaddingStart, sidePaddingEnd, sideColor};
-//    }
-
-    public void setCanUseCacheXSidesDivider(boolean canUseCacheXSidesDivider) {
+    public XSidesDividerItemDecoration setCanUseCacheXSidesDivider(boolean canUseCacheXSidesDivider) {
         this.isCanUseCacheXSidesDivider = canUseCacheXSidesDivider;
+        return this;
     }
 
-    public void setDebugLog(boolean isDebugLog) {
+    public XSidesDividerItemDecoration setDebugLog(boolean isDebugLog) {
         this.isDebugLog = isDebugLog;
+        return this;
+    }
+
+    public XSidesDividerItemDecoration setNeedConsiderItemViewMargin(boolean needConsiderItemViewMargin) {
+        this.isNeedConsiderItemViewMargin = needConsiderItemViewMargin;
+        return this;
+    }
+
+    public XSidesDividerItemDecoration setNeedFillDividerCrossGap(boolean needFillDividerCrossGap) {
+        this.isNeedFillDividersCrossGap = needFillDividerCrossGap;
+        return this;
+    }
+
+    public XSidesDividerItemDecoration letSideValueUseDpValue(boolean isSideValuesUseDpUnit) {
+        this.isSideValuesUseDpUnit = isSideValuesUseDpUnit;
+        return this;
     }
 }

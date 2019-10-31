@@ -1,6 +1,5 @@
 package com.fee.xitemdecoration;
 
-import android.content.Context;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Nullable;
 
@@ -16,50 +15,49 @@ import android.support.annotation.Nullable;
  * ******************(^_^)***********************
  */
 public class XColorWidthDivider extends XSidesDividerItemDecoration {
+    /**
+     * Divider 的默认绘制颜色
+     * def:透明
+     */
     @ColorInt
-    protected int dividerColor = 0xffdddddd;
+    protected int dividerColor = 0;
     /**
      * 虽然这里是定义名为宽，但因为本Divider为水平方向的，则看成是divider的高
-     * 单位：dp
+     * 单位：dp/px
      */
-    protected float dividerWidthDp = 0.5f;
+    protected float dividerWidthDpOrPxValue = 0.5f;
 
     /**
-     * 单位：dp
+     * 单位：dp/px
      */
-    protected float dividerPaddingStartDp;
+    protected float dividerPaddingStartDpOrPxValue;
 
     /**
-     * 单位：dp
+     * 单位：dp/px
      */
-    protected float dividerPaddingEndDp;
+    protected float dividerPaddingEndDpOrPxValue;
 
-    public XColorWidthDivider(Context context) {
-        super(context);
-    }
 
     public XColorWidthDivider withDividerColor(@ColorInt int dividerColor) {
-//        if (dividerColor > 0) {
-            this.dividerColor = dividerColor;
-//        }
+        this.dividerColor = dividerColor;
         return this;
     }
 
-    public XColorWidthDivider withDividerWidthDp(float dividerWidthDp) {
-        if (dividerWidthDp > 0) {
-            this.dividerWidthDp = dividerWidthDp;
+    public XColorWidthDivider withDividerWidthValue(float dividerWidthDpOrPxValue) {
+        if (dividerWidthDpOrPxValue > 0) {
+            this.dividerWidthDpOrPxValue = dividerWidthDpOrPxValue;
         }
         return this;
     }
-    public XColorWidthDivider withDividerPaddingStartDp(float dividerPaddingStartDp) {
-        if (dividerPaddingStartDp > 0) {
-            this.dividerPaddingStartDp = dividerPaddingStartDp;
+    public XColorWidthDivider withDividerPaddingStartValue(float dividerPaddingStartDpOrPxValue) {
+        if (dividerPaddingStartDpOrPxValue > 0) {
+            this.dividerPaddingStartDpOrPxValue = dividerPaddingStartDpOrPxValue;
         }
         return this;
     }
-    public XColorWidthDivider withDividerPaddingEndDp(float dividerPaddingEndDp) {
-        if (dividerPaddingEndDp > 0) {
-            this.dividerPaddingEndDp = dividerPaddingEndDp;
+    public XColorWidthDivider withDividerPaddingEndValue(float dividerPaddingEndDpOrPxValue) {
+        if (dividerPaddingEndDpOrPxValue > 0) {
+            this.dividerPaddingEndDpOrPxValue = dividerPaddingEndDpOrPxValue;
         }
         return this;
     }
@@ -73,9 +71,10 @@ public class XColorWidthDivider extends XSidesDividerItemDecoration {
     @Nullable
     @Override
     public XSidesDivider getItemDivider(int itemPosition) {
-        SideDivider bottomSideDi = new SideDivider(true, dividerWidthDp, dividerPaddingStartDp, dividerPaddingEndDp, dividerColor);
+        SideDivider bottomSideDivider = new SideDivider(true, dividerWidthDpOrPxValue, dividerPaddingStartDpOrPxValue, dividerPaddingEndDpOrPxValue, dividerColor);
+        bottomSideDivider.withSideValuesUseDpValue(isSideValuesUseDpUnit);
         return provideDefXSideDividerBuilder()
-                .withBottomSidesDivider(bottomSideDi)
+                .withBottomSidesDivider(bottomSideDivider)
                 .buildXSidesDivider();
     }
 }

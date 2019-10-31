@@ -34,12 +34,12 @@ public class SideDivider {
 
     }
 
-    public SideDivider(boolean isNeedDraw, float sideWidthDp, float sidePaddingStartDp, float sidePaddingEndDp,@ColorInt int dividerColor) {
+    public SideDivider(boolean isNeedDraw, float sideWidthValue, float sidePaddingStartValue, float sidePaddingEndValue,@ColorInt int dividerColor) {
         this.dividerColor = dividerColor;
         this.isNeedDraw = isNeedDraw;
-        this.sideWidthDp = sideWidthDp;
-        this.sidePaddingStartDp = sidePaddingStartDp;
-        this.sidePaddingEndDp = sidePaddingEndDp;
+        this.sideWidthValue = sideWidthValue;
+        this.sidePaddingStartValue = sidePaddingStartValue;
+        this.sidePaddingEndValue = sidePaddingEndValue;
     }
 
     /**
@@ -71,35 +71,47 @@ public class SideDivider {
      * def: false
      */
     private boolean isNeedDrawAtLastPos;
+
+    /**
+     * 本SideDivider所指定的值是否以DP为单位
+     * def: DP 为单位
+     * false:使用px像素为单位
+     */
+    private boolean isSideValuesUseDpUnit = true;
+
+    /**
+     * 是否主动设置了值所使用的单位
+     */
+    private boolean isActiveSetValueUnit;
     /**
      * divider本边的宽，如果是横向的为高，如果是竖向的为宽
-     * 单位：dp
+     * 单位：dp/或者px (值的单位决定于{{@link #isSideValuesUseDpUnit}})
      * 横向：
      * ------------------
-     * |-->sideWidthDp  |
+     * |-->sideWidthValue|
      * ------------------
      * 竖向：
-     * |---- -->sideWidthDp
+     * |---- -->sideWidthValue
      * |   |
      * |   |
      * |   |
      * |---|
      */
-    private float sideWidthDp;
+    private float sideWidthValue;
 
     /**
      * 本边绘制时的起始内边距(缩进)
      * 单位：dp
      * 水平方向左为start，垂直方向上为start
      */
-    private float sidePaddingStartDp;
+    private float sidePaddingStartValue;
 
     /**
      * 本边绘制结束时的内边距(缩进)
      * 单位：dp
      * 水平方向右为end，垂直方向下为end
      */
-    private float sidePaddingEndDp;
+    private float sidePaddingEndValue;
 
     public boolean isNeedDraw() {
         return isNeedDraw;
@@ -109,16 +121,16 @@ public class SideDivider {
         return dividerColor;
     }
 
-    public float getSideWidthDp() {
-        return sideWidthDp;
+    public float getSideWidthValue() {
+        return sideWidthValue;
     }
 
-    public float getSidePaddingStartDp() {
-        return sidePaddingStartDp;
+    public float getSidePaddingStartValue() {
+        return sidePaddingStartValue;
     }
 
-    public float getSidePaddingEndDp() {
-        return sidePaddingEndDp;
+    public float getSidePaddingEndValue() {
+        return sidePaddingEndValue;
     }
 
     public SideDivider withDividerColor(@ColorInt int sideDividerColor) {
@@ -131,18 +143,18 @@ public class SideDivider {
         return this;
     }
 
-    public SideDivider withSideWidthDp(float sideWidthDp) {
-        this.sideWidthDp = sideWidthDp;
+    public SideDivider withSideWidthValue(float sideWidthDpOrPxValue) {
+        this.sideWidthValue = sideWidthDpOrPxValue;
         return this;
     }
 
-    public SideDivider withSidePaddingStartDp(float sidePaddingStartDp) {
-        this.sidePaddingStartDp = sidePaddingStartDp;
+    public SideDivider withSidePaddingStartValue(float sidePaddingStartDpOrPxValue) {
+        this.sidePaddingStartValue = sidePaddingStartDpOrPxValue;
         return this;
     }
 
-    public SideDivider withSidePaddingEndDp(float sidePaddingEndDp) {
-        this.sidePaddingEndDp = sidePaddingEndDp;
+    public SideDivider withSidePaddingEndValue(float sidePaddingEndDpOrPxValue) {
+        this.sidePaddingEndValue = sidePaddingEndDpOrPxValue;
         return this;
     }
 
@@ -159,6 +171,19 @@ public class SideDivider {
     public SideDivider withSidePostion(int sidePosition) {
         this.sidePostion = sidePosition;
         return this;
+    }
+
+    public SideDivider withSideValuesUseDpValue(boolean isSideValuesUseDpUnit) {
+        this.isSideValuesUseDpUnit = isSideValuesUseDpUnit;
+        isActiveSetValueUnit = true;
+        return this;
+    }
+
+    public boolean isSideValuesUseDpUnit() {
+        return this.isSideValuesUseDpUnit;
+    }
+    public boolean isActiveSetValueUnit() {
+        return this.isActiveSetValueUnit;
     }
 
     public boolean isNeedDrawAt1stPos() {

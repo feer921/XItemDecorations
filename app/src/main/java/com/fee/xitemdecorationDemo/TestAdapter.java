@@ -2,6 +2,7 @@ package com.fee.xitemdecorationDemo;
 
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -46,7 +47,16 @@ public class TestAdapter extends RecyclerView.Adapter<TestAdapter.AViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull AViewHolder holder, int position) {
+        //先这里，后ItemDecoration onDraw()
         TextView tvItemView = (TextView) holder.itemView;
+        ViewGroup.LayoutParams vlpSrc = tvItemView.getLayoutParams();
+        Log.i("info", "--> onBindViewHolder() position = " + position + " item layoutParams = " + vlpSrc);
+//        if (vlpSrc == null) {
+//            RecyclerView.LayoutParams vlp = new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+//            vlp.setMarginStart(30);
+//            vlp.bottomMargin = 30;
+//            tvItemView.setLayoutParams(vlp);
+//        }
         tvItemView.setText(position + "-" + getItemData(position));
     }
 
