@@ -19,8 +19,10 @@ public class GridItemDivider extends XColorWidthDivider {
 
     /**
      * 是否需要考虑绘制顶部的Divider
+     * def:false
      */
-    private boolean isNeedDrawTopDivider = true;
+    private boolean isNeedDrawTopDivider = false;
+
     public GridItemDivider(int gridSpanCount) {
         this.gridSpanCount = gridSpanCount;
     }
