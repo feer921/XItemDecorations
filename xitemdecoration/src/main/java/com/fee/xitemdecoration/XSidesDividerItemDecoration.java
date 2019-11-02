@@ -57,6 +57,10 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
      */
     protected boolean isSideValuesUseDpUnit = true;
 
+    /**
+     * 本次被装饰的RecyclerView总共有多少个ItemView
+     */
+    protected int totalItemViewCount;
     public XSidesDividerItemDecoration(Context context) {
         this.context = context;
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -88,8 +92,15 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         if (isDebugLog) {
             L.d(TAG, "-->getItemOffsets() itemInAdapterPosition = " + itemInAdapterPosition + " childLayoutPosition = " + childLayoutPosition);
         }
-        int itemPosition = ((RecyclerView.LayoutParams) view.getLayoutParams()).getViewLayoutPosition();
 
+        int itemPosition = ((RecyclerView.LayoutParams) view.getLayoutParams()).getViewLayoutPosition();
+        RecyclerView.Adapter adapter = parent.getAdapter();
+        if (adapter != null) {
+            totalItemViewCount = adapter.getItemCount();
+        }
+        else {
+            totalItemViewCount = -1;
+        }
         XSidesDivider divider = providerItemDivider(itemPosition);
 
         if (divider == null) {
@@ -133,13 +144,14 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         }
         //left, top, right, bottom
         int visibleChildCount = parent.getChildCount();//注意：这里表示 当前屏幕上(可见区域)的child view
-        int totalItemsCount = 0;
-        RecyclerView.Adapter adapter = parent.getAdapter();
-        if (adapter != null) {
-            totalItemsCount = adapter.getItemCount();
+        if (totalItemViewCount == -1) {
+            RecyclerView.Adapter adapter = parent.getAdapter();
+            if (adapter != null) {
+                totalItemViewCount = adapter.getItemCount();
+            }
         }
         if (isDebugLog) {
-            L.i(TAG, "-->onDraw()  childCount = " + visibleChildCount + " totalItemsCount = " + totalItemsCount
+            L.i(TAG, "-->onDraw()  childCount = " + visibleChildCount + " totalItemsCount = " + totalItemViewCount
                 + " RecyclerView state = " + state
             );
         }
@@ -151,7 +163,7 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
 //            int itemPosition = ((RecyclerView.LayoutParams) child.getLayoutParams()).getViewLayoutPosition();
             XSidesDivider divider = providerItemDivider(itemViewPos);
             boolean is1stItem = itemViewPos == 0;
-            boolean isLastItem = (itemViewPos == totalItemsCount - 1);
+            boolean isLastItem = (itemViewPos == totalItemViewCount - 1);
             if (divider != null) {
                 //左 todo ??这个也可以缓存??
                 SparseIntArray sideDividerInfos = extractSidesDividerInfos(is1stItem, isLastItem, divider.getLeftSideDivider());
