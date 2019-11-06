@@ -58,6 +58,12 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
     protected boolean isSideValuesUseDpUnit = true;
 
     /**
+     * 是否需要绘制透明的矩形
+     * def:true
+     */
+    private boolean isNeedDrawTransparentRect = true;
+
+    /**
      * 本次被装饰的RecyclerView总共有多少个ItemView
      */
     protected int totalItemViewCount;
@@ -310,7 +316,9 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         if (isInterceptedDraw) {
             return;
         }
-        c.drawRect(left, top, right, bottom, mPaint);
+        if (color != 0 || isNeedDrawTransparentRect) {
+            c.drawRect(left, top, right, bottom, mPaint);
+        }
         extraDrawItemViewDividers(DIVIDER_POS_LEFT, child, c, parent, drawRect);
     }
 
@@ -366,7 +374,10 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         if (isIntercepted) {
             return;
         }
-        c.drawRect(left, top, right, bottom, mPaint);
+        if (color != 0 || isNeedDrawTransparentRect) {
+            c.drawRect(left, top, right, bottom, mPaint);
+        }
+//        c.drawRect(left, top, right, bottom, mPaint);
         extraDrawItemViewDividers(DIVIDER_POS_TOP, child, c, parent, drawRect);
     }
 
@@ -420,7 +431,10 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         if (isIntercepted) {
             return;
         }
-        c.drawRect(left, top, right, bottom, mPaint);
+        if (color != 0 || isNeedDrawTransparentRect) {
+            c.drawRect(left, top, right, bottom, mPaint);
+        }
+//        c.drawRect(left, top, right, bottom, mPaint);
         extraDrawItemViewDividers(DIVIDER_POS_RIGHT, child, c, parent, drawRect);
     }
 
@@ -484,7 +498,10 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
             return;
         }
         //不拦截的话，默认绘制一个矩形
-        c.drawRect(left, top, right, bottom, mPaint);
+        if (color != 0 || isNeedDrawTransparentRect) {
+            c.drawRect(left, top, right, bottom, mPaint);
+        }
+//        c.drawRect(left, top, right, bottom, mPaint);
         extraDrawItemViewDividers(DIVIDER_POS_BOTTTOM, child, c, parent, drawRect);
     }
 
@@ -600,7 +617,10 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         this.extraTag4Debug = extraDebugTag;
         return this;
     }
-
+    public XSidesDividerItemDecoration setNeedDrawTransparentRect(boolean needDrawTranslateRect) {
+        isNeedDrawTransparentRect = needDrawTranslateRect;
+        return this;
+    }
     protected void debugInfo(String logContent) {
         if (isDebugLog) {
             L.d(extraTag4Debug != null ? extraTag4Debug : TAG, logContent);

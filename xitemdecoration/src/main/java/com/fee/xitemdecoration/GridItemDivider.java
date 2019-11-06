@@ -19,9 +19,17 @@ public class GridItemDivider extends XColorWidthDivider {
 
     /**
      * 是否需要考虑绘制顶部的Divider
-     * def:false
+     * def:false;
      */
     private boolean isNeedDrawTopDivider = false;
+
+    /**
+     * 是否需要考虑绘制网格的最后一行的底部Divider
+     * def:true;
+     */
+    private boolean isNeedDrawBottomDividerAtLastRow = true;
+
+    private float lastRowBottomDividerWidthDpOrPxValue;
 
     public GridItemDivider(int gridSpanCount) {
         this.gridSpanCount = gridSpanCount;
@@ -48,18 +56,44 @@ public class GridItemDivider extends XColorWidthDivider {
         SideDivider halfWidthSideDivider = new SideDivider(true, dividerWidthDpOrPxValue / 2, 0, 0,
                 dividerColor);
 
-        xSidesDivider.withBottomSideDivider(isNeedDrawTopDivider ? halfWidthSideDivider : justBottomSideDivider);//每个item有底部Divider
-        xSidesDivider.withTopSideDivider(isNeedDrawTopDivider ? halfWidthSideDivider : null);
-        xSidesDivider.withRightSideDivider(halfWidthSideDivider)
-                .withLeftSideDivider(halfWidthSideDivider);
+        xSidesDivider.withBottomSideDivider(isNeedDrawTopDivider ? halfWidthSideDivider : justBottomSideDivider)//每个item有底部Divider
+                     .withTopSideDivider(isNeedDrawTopDivider ? halfWidthSideDivider : null)
+                     .withRightSideDivider(halfWidthSideDivider)
+                     .withLeftSideDivider(halfWidthSideDivider);
+
         int curRowIndex = itemPosition / gridSpanCount;//==0时为第一行
         debugInfo("-->getItemDivider() curRowIndex = " + curRowIndex + " totalRowCount = " + totalRowCount + " itemPosition = " + itemPosition);
         if (curRowIndex == 0) {//第一行时不需要绘制顶部Divider
             xSidesDivider.withTopSideDivider(null);
+            if (totalRowCount == 1) {//只有一行
+                if (!isNeedDrawBottomDividerAtLastRow) {
+                    xSidesDivider.withBottomSideDivider(null);
+                }
+                else {
+                    if (lastRowBottomDividerWidthDpOrPxValue > 0) {
+                        SideDivider bottomSideDivider = xSidesDivider.getBottomSideDivider();
+                        if (bottomSideDivider != null) {
+                            bottomSideDivider.withSideWidthValue(lastRowBottomDividerWidthDpOrPxValue);
+                        }
+                    }
+                }
+            }
         }
         else {
             if (curRowIndex == totalRowCount -1) {//最后一行不需要绘制底部？也可以绘制,不影响显示效果
-                xSidesDivider.withBottomSideDivider(null);
+                //可能存在 isNeedDrawTopDivider = true;isNeedDrawBottomDividerAtLastRow = true的情况
+                if (isNeedDrawBottomDividerAtLastRow) {//如果最后一行需要绘制底部，最好是全divider高度的Divider
+                    if (justBottomSideDivider == null) {
+                        justBottomSideDivider = new SideDivider(true, dividerWidthDpOrPxValue,
+                                0, 0, dividerColor);
+                        justBottomSideDivider.withNeedDrawAtLastPos(true);
+                    }
+                    if (lastRowBottomDividerWidthDpOrPxValue > 0) {
+                        justBottomSideDivider.withSideWidthValue(lastRowBottomDividerWidthDpOrPxValue);
+                    }
+                }
+//                justBottomSideDivider = xSidesDivider.getBottomSideDivider();
+                xSidesDivider.withBottomSideDivider(isNeedDrawBottomDividerAtLastRow ? justBottomSideDivider : null);
             }
         }
 //        int curRow = 0;
@@ -86,8 +120,18 @@ public class GridItemDivider extends XColorWidthDivider {
         return xSidesDivider;
     }
 
-    public void setNeedDrawTopDivider(boolean needDrawTopDivider) {
+    public GridItemDivider setNeedDrawTopDivider(boolean needDrawTopDivider) {
         this.isNeedDrawTopDivider = needDrawTopDivider;
+        return this;
     }
 
+    public GridItemDivider setNeedDrawBottomDividerAtLastRow(boolean needDrawBottomDividerAtLastRow) {
+        this.isNeedDrawBottomDividerAtLastRow = needDrawBottomDividerAtLastRow;
+        return this;
+    }
+
+    public GridItemDivider setLastRowBottomDividerWidth(float lastRowBottomDividerWidth) {
+        this.lastRowBottomDividerWidthDpOrPxValue = lastRowBottomDividerWidth;
+        return this;
+    }
 }
