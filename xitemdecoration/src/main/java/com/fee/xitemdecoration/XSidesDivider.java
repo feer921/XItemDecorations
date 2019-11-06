@@ -96,4 +96,14 @@ public class XSidesDivider {
         this.bottomSideDivider = bottomSideDivider;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "XSidesDivider{" +
+                "leftSideDivider=" + leftSideDivider +
+                ", topSideDivider=" + topSideDivider +
+                ", rightSideDivider=" + rightSideDivider +
+                ", bottomSideDivider=" + bottomSideDivider +
+                '}';
+    }
 }

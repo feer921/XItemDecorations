@@ -27,9 +27,9 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
     private Context context;
     private SparseArray<XSidesDivider> xSidesDividerMapItemPosition = new SparseArray<>();
 
-    private boolean isDebugLog = false;
+    protected boolean isDebugLog = false;
 
-
+    protected String extraTag4Debug;
     /**
      * 是否可重用XSideDivider
      * def:true
@@ -594,5 +594,16 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
     public XSidesDividerItemDecoration letSideValueUseDpValue(boolean isSideValuesUseDpUnit) {
         this.isSideValuesUseDpUnit = isSideValuesUseDpUnit;
         return this;
+    }
+
+    public XSidesDividerItemDecoration setExtraDebugTag(String extraDebugTag) {
+        this.extraTag4Debug = extraDebugTag;
+        return this;
+    }
+
+    protected void debugInfo(String logContent) {
+        if (isDebugLog) {
+            L.d(extraTag4Debug != null ? extraTag4Debug : TAG, logContent);
+        }
     }
 }

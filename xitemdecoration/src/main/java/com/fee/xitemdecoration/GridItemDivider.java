@@ -53,6 +53,7 @@ public class GridItemDivider extends XColorWidthDivider {
         xSidesDivider.withRightSideDivider(halfWidthSideDivider)
                 .withLeftSideDivider(halfWidthSideDivider);
         int curRowIndex = itemPosition / gridSpanCount;//==0时为第一行
+        debugInfo("-->getItemDivider() curRowIndex = " + curRowIndex + " totalRowCount = " + totalRowCount + " itemPosition = " + itemPosition);
         if (curRowIndex == 0) {//第一行时不需要绘制顶部Divider
             xSidesDivider.withTopSideDivider(null);
         }
@@ -81,6 +82,7 @@ public class GridItemDivider extends XColorWidthDivider {
                 xSidesDivider.withLeftSideDivider(null);
             }
         }
+        debugInfo("-->getItemDivider() xSidesDivider = " + xSidesDivider);
         return xSidesDivider;
     }
 
