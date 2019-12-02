@@ -29,7 +29,9 @@ public class XColorWidthDivider extends XSidesDividerItemDecoration {
     @ColorInt
     protected int dividerColor = 0;
     /**
-     * 虽然这里是定义名为宽，但因为本Divider为水平方向的，则看成是divider的高
+     * 虽然这里是定义名为宽，但如果本Divider处在水平方向时，则看成是divider的高
+     * 该值适合 item间 间距相等的情况,如果当前的RecyclerView为网格布局，并且item间的间距不相等的情况下，
+     * 该值则看成除第一行上、第一列左、最后一列右、最后一行底外的 item间距(相等)
      * 单位：dp/px
      */
     protected float dividerWidthDpOrPxValue = 0.5f;

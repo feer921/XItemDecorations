@@ -95,17 +95,21 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         //作为传递left,right,top,bottom的偏移值来用的
         int itemInAdapterPosition = parent.getChildAdapterPosition(view);
         int childLayoutPosition = parent.getChildLayoutPosition(view);
-        if (isDebugLog) {
-            L.d(TAG, "-->getItemOffsets() itemInAdapterPosition = " + itemInAdapterPosition + " childLayoutPosition = " + childLayoutPosition);
-        }
+        debugInfo("-->getItemOffsets() itemInAdapterPosition = " + itemInAdapterPosition + " childLayoutPosition = " + childLayoutPosition);
 
         int itemPosition = ((RecyclerView.LayoutParams) view.getLayoutParams()).getViewLayoutPosition();
-        RecyclerView.Adapter adapter = parent.getAdapter();
-        if (adapter != null) {
-            totalItemViewCount = adapter.getItemCount();
+        totalItemViewCount = theRealItemsCount();
+        if (totalItemViewCount == -1) {
+            RecyclerView.Adapter adapter = parent.getAdapter();
+            if (adapter != null) {
+                totalItemViewCount = adapter.getItemCount();
+            }
+            else {
+                totalItemViewCount = -1;
+            }
         }
-        else {
-            totalItemViewCount = -1;
+        if (totalItemViewCount <= 0) {
+            return;
         }
         XSidesDivider divider = providerItemDivider(itemPosition);
 
@@ -150,16 +154,17 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         }
         //left, top, right, bottom
         int visibleChildCount = parent.getChildCount();//注意：这里表示 当前屏幕上(可见区域)的child view
+        totalItemViewCount = theRealItemsCount();
         if (totalItemViewCount == -1) {
             RecyclerView.Adapter adapter = parent.getAdapter();
             if (adapter != null) {
                 totalItemViewCount = adapter.getItemCount();
             }
         }
-        if (isDebugLog) {
-            L.i(TAG, "-->onDraw()  childCount = " + visibleChildCount + " totalItemsCount = " + totalItemViewCount
-                + " RecyclerView state = " + state
-            );
+        debugInfo("-->onDraw()  childCount = " + visibleChildCount + " totalItemsCount = " + totalItemViewCount
+        );
+        if (totalItemViewCount <= 0) {//to do 要判断这个？？
+            return;
         }
         for (int i = 0; i < visibleChildCount; i++) {
             View child = parent.getChildAt(i);
@@ -185,6 +190,9 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
                             sideDividerInfos.get(INDEX_PADDING_END)
                     );
                 }
+                else {
+                    debugInfo(" child index = " + i + " not need draw left side divider ");
+                }
                 //上
                 sideDividerInfos = extractSidesDividerInfos(is1stItem, isLastItem, divider.getTopSideDivider());
 //                sideDividerInfos = extractSideDividerInfos(divider.getTopSideDivider());
@@ -199,11 +207,14 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
                             sideDividerInfos.get(INDEX_PADDING_END)
                     );
                 }
+                else {
+                    debugInfo(" child index = " + i + " not need draw Top side divider ");
+                }
                 //右
                 sideDividerInfos = extractSidesDividerInfos(is1stItem, isLastItem, divider.getRightSideDivider());
 //                sideDividerInfos = extractSideDividerInfos(divider.getRightSideDivider());
                 if (sideDividerInfos != null) {
-                    drawChildRightVertical(
+                    drawChildRightVertical(i,
                             child,
                             c,
                             parent,
@@ -212,6 +223,9 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
                             sideDividerInfos.get(INDEX_PADDING_START),
                             sideDividerInfos.get(INDEX_PADDING_END)
                     );
+                }
+                else {
+                    debugInfo("child index = " + i + " not need draw right side divider ");
                 }
                 //底
                 sideDividerInfos = extractSidesDividerInfos(is1stItem, isLastItem, divider.getBottomSideDivider());
@@ -226,6 +240,9 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
                             sideDividerInfos.get(INDEX_PADDING_START),
                             sideDividerInfos.get(INDEX_PADDING_END)
                     );
+                }
+                else {
+                    debugInfo(" child index = " + i + " not need draw bottom side divider ");
                 }
             }
         }
@@ -391,7 +408,7 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
      * @param startPaddingPx 矩形Divider 左边距
      * @param endPaddingPx 矩形Divider 右边距
      */
-    private void drawChildRightVertical(View child, Canvas c, RecyclerView parent, @ColorInt int color, int lineWidthPx,
+    private void drawChildRightVertical(int childIndex,View child, Canvas c, RecyclerView parent, @ColorInt int color, int lineWidthPx,
                                         int startPaddingPx, int endPaddingPx) {
 
         int topPadding = 0;
@@ -435,6 +452,7 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
             c.drawRect(left, top, right, bottom, mPaint);
         }
 //        c.drawRect(left, top, right, bottom, mPaint);
+        debugInfo("--> drawChildRightVertical() childIndex = " + childIndex + " drawRect = " + drawRect + "  lineWidthPx = " + lineWidthPx);
         extraDrawItemViewDividers(DIVIDER_POS_RIGHT, child, c, parent, drawRect);
     }
 
@@ -625,5 +643,21 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         if (isDebugLog) {
             L.d(extraTag4Debug != null ? extraTag4Debug : TAG, logContent);
         }
+    }
+    private IItemsCounter iItemsCounter;
+
+    public XSidesDividerItemDecoration setItemsCounter(IItemsCounter itemsCounter) {
+        this.iItemsCounter = itemsCounter;
+        return this;
+    }
+
+    protected int theRealItemsCount() {
+        if (iItemsCounter != null) {
+            return iItemsCounter.countItemsCount();
+        }
+        return -1;
+    }
+    public interface IItemsCounter{
+        int countItemsCount();
     }
 }

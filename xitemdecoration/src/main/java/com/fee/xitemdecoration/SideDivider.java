@@ -223,4 +223,13 @@ public class SideDivider {
         }
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "SideDivider{" +
+                "dividerColor=" + dividerColor +
+                ", isNeedDraw=" + isNeedDraw +
+                ", sideWidthValue=" + sideWidthValue +
+                '}';
+    }
 }
