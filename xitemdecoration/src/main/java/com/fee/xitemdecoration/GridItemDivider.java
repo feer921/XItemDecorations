@@ -111,23 +111,29 @@ public class GridItemDivider extends XColorWidthDivider {
         }
         XSidesDivider xSidesDivider = new XSidesDivider();
         SideDivider justBottomSideDivider = null;
-        if (!isNeedDrawTopDivider) {
+        if (!isNeedDrawTopDivider) {//这里表示每个 item不需要绘制 top divider,即上、下行的 divider由 item 的底部承担绘制
             justBottomSideDivider = new SideDivider(true, dividerWidthDpOrPxValue,
                     0, 0, dividerColor);
             justBottomSideDivider.withNeedDrawAtLastPos(true);
         }
         //列与列间距(每个item绘制一半)，该间距为相等的
-        SideDivider perColumnHalfDivider = new SideDivider(true, dividerWidthDpOrPxValue / 2.0f, 0, 0,
+        SideDivider perColumnHalfDivider = new SideDivider(true,
+                dividerWidthDpOrPxValue / 2.0f,
+                0,
+                0,
                 dividerColor);
 
         //行与行间距(每个item绘制一半)，该间距默认与 dividerWidthDpOrPxValue 相等
-        SideDivider perRowHalfDivider = new SideDivider(true, dividerWidthDpOrPxValue / 2.0f, 0, 0,
+        SideDivider perRowHalfDivider = new SideDivider(true,
+                dividerWidthDpOrPxValue / 2.0f,
+                0,
+                0,
                 dividerColor);
 
         //有设置行与行间距不等于 dividerWidthDpOrPxValue的情况下
         if (perRowDividerDpOrPxValue > 0 && perRowDividerDpOrPxValue != dividerWidthDpOrPxValue) {
             perRowHalfDivider.withSideWidthValue(perRowDividerDpOrPxValue / 2.0f);
-            if (!isNeedDrawTopDivider) {
+            if (!isNeedDrawTopDivider) {//
                 if (justBottomSideDivider != null) {
                     justBottomSideDivider.withSideWidthValue(perRowDividerDpOrPxValue);
                 }
@@ -148,38 +154,28 @@ public class GridItemDivider extends XColorWidthDivider {
                         dividerColor);
                 xSidesDivider.withTopSideDivider(assignTopSideDivider);
             }
-            else {
+            else {//默认第一行 不需要绘制 顶部 divider
                 xSidesDivider.withTopSideDivider(null);
             }
-            if (totalRowCount == 1) {//只有一行
-                if (!isNeedDrawBottomDividerAtLastRow) {
-                    xSidesDivider.withBottomSideDivider(null);
-                }
-                else {
-                    if (lastRowBottomDividerWidthDpOrPxValue > 0) {
-                        SideDivider bottomSideDivider = xSidesDivider.getBottomSideDivider();
-                        if (bottomSideDivider != null) {
-                            bottomSideDivider.withSideWidthValue(lastRowBottomDividerWidthDpOrPxValue);
-                        }
-                    }
-                }
-            }
         }
-        else {
-            if (curRowIndex == totalRowCount -1) {//最后一行不需要绘制底部？也可以绘制,不影响显示效果
-                //可能存在 isNeedDrawTopDivider = true;isNeedDrawBottomDividerAtLastRow = true的情况
-                if (isNeedDrawBottomDividerAtLastRow) {//如果最后一行需要绘制底部，最好是全divider高度的Divider
-                    if (justBottomSideDivider == null) {
-                        justBottomSideDivider = new SideDivider(true, dividerWidthDpOrPxValue,
-                                0, 0, dividerColor);
-                        justBottomSideDivider.withNeedDrawAtLastPos(true);
-                    }
-                    if (lastRowBottomDividerWidthDpOrPxValue > 0) {
-                        justBottomSideDivider.withSideWidthValue(lastRowBottomDividerWidthDpOrPxValue);
-                    }
+
+        if (curRowIndex == totalRowCount - 1) {//最后一行不需要绘制底部？也可以绘制,不影响显示效果
+            if (!isNeedDrawBottomDividerAtLastRow) {
+                xSidesDivider.withBottomSideDivider(null);
+            }
+            else {//最后一行需要绘制 divider
+                float theLastRowSideDividerValue = perRowDividerDpOrPxValue > 0 ? perRowDividerDpOrPxValue : dividerWidthDpOrPxValue;
+                //要 构造一个新的 SideDivider,不然会影响 perRowHalfDivider
+                SideDivider bottomSideDivider = new SideDivider(true,
+                        theLastRowSideDividerValue,
+                        0,
+                        0,
+                        dividerColor);
+                bottomSideDivider.withNeedDrawAtLastPos(true);
+                if (lastRowBottomDividerWidthDpOrPxValue > 0) {//如果有指定最后一行的底部divider 值,则让item的 bottom divider绘制该值
+                    bottomSideDivider.withSideWidthValue(lastRowBottomDividerWidthDpOrPxValue);
                 }
-//                justBottomSideDivider = xSidesDivider.getBottomSideDivider();
-                xSidesDivider.withBottomSideDivider(isNeedDrawBottomDividerAtLastRow ? justBottomSideDivider : null);
+                xSidesDivider.withBottomSideDivider(bottomSideDivider);
             }
         }
 //        int curRow = 0;
@@ -192,18 +188,19 @@ public class GridItemDivider extends XColorWidthDivider {
 //        if (curRow == 1) {
 //
 //        }
-        String mark = "mark";
+
         //处理列方向
         int posModResult = (itemPosition + 1) % gridSpanCount;//当前的position位置+1 与 当前列数取余
         if (posModResult == 0) {//表示当前Posistion在最后一列
-//            justBottomSideDivider.withNeedDrawAtLastPos(true);
-            if (lastColumnRightDividerDpOrPxValue > 0) {
-                SideDivider rightSideDivider = xSidesDivider.getRightSideDivider();
-                if (rightSideDivider != null) {
-                    rightSideDivider.withSideWidthValue(lastColumnRightDividerDpOrPxValue)
-                            .withNeedDrawAtLastPos(true)
-                    ;
-                }
+            if (lastColumnRightDividerDpOrPxValue > 0) {//即表示最后一列的 right divider需要绘制
+                SideDivider lastColumnDivider = new SideDivider(true,
+                        lastColumnRightDividerDpOrPxValue,
+                        0,
+                        0,
+                        dividerColor
+                );
+                lastColumnDivider.withNeedDrawAtLastPos(true);
+                xSidesDivider.withRightSideDivider(lastColumnDivider);
             }
             else {
                 xSidesDivider.withRightSideDivider(null);
@@ -212,12 +209,13 @@ public class GridItemDivider extends XColorWidthDivider {
         else {
             if (posModResult == 1) {//第一列默认不需要左Divider
                 if (firstColumnLeftDividerDpOrPxValue > 0) {
-                    SideDivider leftSideDivider = xSidesDivider.getLeftSideDivider();
-                    if (leftSideDivider != null) {
-                        leftSideDivider.withSideWidthValue(firstColumnLeftDividerDpOrPxValue)
-                                .withNeedDrawAt1stPos(true)
-                                ;
-                    }
+                    SideDivider firstColumnSideDivider = new SideDivider(true,
+                            firstColumnLeftDividerDpOrPxValue,
+                            0,
+                            0,
+                            dividerColor);
+                    firstColumnSideDivider.withNeedDrawAt1stPos(true);
+                    xSidesDivider.withLeftSideDivider(firstColumnSideDivider);
                 }
                 else {
                     xSidesDivider.withLeftSideDivider(null);
@@ -228,7 +226,12 @@ public class GridItemDivider extends XColorWidthDivider {
         return xSidesDivider;
     }
 
-
+    /**
+     * 配置RecyclerView 网格列表 的 items是否绘制 Top位置的Divider
+     * def: false 即 items 默认不绘制 Top位置的Divider，而是由 items的 Bottom位置的Divider来 替代上、下间距
+     * @param needDrawTopDivider true: 让items绘制Top位置的Divider，此时 divider的值为{@link #dividerWidthDpOrPxValue}的一半
+     * @return self
+     */
     public GridItemDivider setNeedDrawTopDivider(boolean needDrawTopDivider) {
         this.isNeedDrawTopDivider = needDrawTopDivider;
         return this;
@@ -239,26 +242,72 @@ public class GridItemDivider extends XColorWidthDivider {
         return this;
     }
 
+    /**
+     * <p>列表 底</p>
+     * 配置 RecyclerView 网格列表 最下面一行的 items的底部 divider
+     * 场景为：RecyclerView 本身不设置 底padding或者 margin的情况下，让最后一行的 items绘制 底部 divider
+     * 以满足列表 底部间距的需求
+     * 注：不配置的情况下，默认最后一行的 items 底部 Divider不绘制
+     * @param lastRowBottomDividerWidth 最后一行的 items的 Bottom位置的Divider的值
+     * @return self
+     */
     public GridItemDivider setLastRowBottomDividerWidth(float lastRowBottomDividerWidth) {
         this.lastRowBottomDividerWidthDpOrPxValue = lastRowBottomDividerWidth;
+        isNeedDrawBottomDividerAtLastRow = true;
         return this;
     }
 
+    /**
+     * <p>列表 上</p>
+     * 配置 RecyclerView 网格列表 第一行的 items的顶部 divider
+     * 场景为：RecyclerView 本身不设置 上padding或者 margin的情况下，让第一行的 items绘制 顶部 divider
+     * 以满足列表 顶部间距的需求
+     * 注：不配置的情况下，默认第一行的 items Top Divider不绘制
+     * @param firstRowTopDividerDpOrPxValue 第一行 items的顶部 Divider的值
+     * @return self
+     */
     public GridItemDivider setFirstRowTopDividerValue(float firstRowTopDividerDpOrPxValue) {
         this.firstRowTopDividerDpOrPxValue = firstRowTopDividerDpOrPxValue;
         return this;
     }
 
+    /**
+     * <p>列表 中</p>
+     * 配置RecyclerView网格列表布局的 上、下行的间距 divider
+     * 场景为：RecyclerView的 行方向的 items间距 divider与 列(垂直)方向的items上、下间距不一致的情况下，
+     * 保持使用{@link #dividerWidthDpOrPxValue} 作为行方向的的 items间距，而使用此方法配置竖、垂直、上下行的间距值
+     * 注：不配置的情况下，上下行间距和 左右列间距的值是相等的，使用{@link #dividerWidthDpOrPxValue}
+     * @param perRowDividerDpOrPxValue 网格列表布局的 上、下行的间距 divider 值
+     * @return self
+     */
     public GridItemDivider setPerRowDividerValue(float perRowDividerDpOrPxValue) {
         this.perRowDividerDpOrPxValue = perRowDividerDpOrPxValue;
         return this;
     }
 
+    /**
+     * <p>列表 左</p>
+     * 配置网格列表布局 的第一列 items 左侧divider
+     * 场景为：RecyclerView本身不设置 左padding或者左margin的情况下，让第一列的 items 绘制左侧divider
+     * 以满足列表左侧间距需求
+     * 注：不配置情况下，默认第一列的 items 左侧都不绘制
+     * @param firstColumnLeftDividerDpOrPxValue  RecyclerView网格列表 第一列items的左侧Divider的值
+     * @return self
+     */
     public GridItemDivider setFirstColumnLeftDividerValue(float firstColumnLeftDividerDpOrPxValue) {
         this.firstColumnLeftDividerDpOrPxValue = firstColumnLeftDividerDpOrPxValue;
         return this;
     }
 
+    /**
+     * <p>列表 右</p>
+     * 配置网格列表布局 的最后一列 item 右侧divider
+     * 场景为：RecyclerView本身不设置 右padding或者margin的情况下，让最后一列的 items 绘制右侧divider
+     * 以满足列表右侧间距需求
+     * 注：不配置情况下，默认最后一列的 items 右侧都不绘制
+     * @param lastColumnRightDividerDpOrPxValue  RecyclerView网格列表 最后一列items的右侧Divider的值
+     * @return self
+     */
     public GridItemDivider setLastColumnRightDividerValue(float lastColumnRightDividerDpOrPxValue) {
         this.lastColumnRightDividerDpOrPxValue = lastColumnRightDividerDpOrPxValue;
         return this;
