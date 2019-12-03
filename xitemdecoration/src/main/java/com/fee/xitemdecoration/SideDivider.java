@@ -42,6 +42,8 @@ public class SideDivider {
         this.sidePaddingEndValue = sidePaddingEndValue;
     }
 
+
+
     /**
      * 当前divider当前边的位置
      */
@@ -231,5 +233,19 @@ public class SideDivider {
                 ", isNeedDraw=" + isNeedDraw +
                 ", sideWidthValue=" + sideWidthValue +
                 '}';
+    }
+    public void copySrcSideDivider(SideDivider srcSideDivider) {
+        if (srcSideDivider != null) {
+            this.sidePostion = srcSideDivider.sidePostion;
+            this.dividerColor = srcSideDivider.dividerColor;
+            this.isNeedDraw = srcSideDivider.isNeedDraw;
+            this.isNeedDrawAt1stPos = srcSideDivider.isNeedDrawAt1stPos;
+            this.isNeedDrawAtLastPos = srcSideDivider.isNeedDrawAtLastPos;
+            this.isSideValuesUseDpUnit = srcSideDivider.isSideValuesUseDpUnit;
+            this.isActiveSetValueUnit = srcSideDivider.isActiveSetValueUnit;
+            this.sideWidthValue = srcSideDivider.sideWidthValue;
+            this.sidePaddingStartValue = srcSideDivider.sidePaddingStartValue;
+            this.sidePaddingEndValue = srcSideDivider.sidePaddingEndValue;
+        }
     }
 }

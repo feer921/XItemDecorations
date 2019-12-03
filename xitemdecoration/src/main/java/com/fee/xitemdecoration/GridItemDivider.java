@@ -116,12 +116,26 @@ public class GridItemDivider extends XColorWidthDivider {
                     0, 0, dividerColor);
             justBottomSideDivider.withNeedDrawAtLastPos(true);
         }
-        //列与列间距(每个item绘制一半)，该间距为相等的
-        SideDivider perColumnHalfDivider = new SideDivider(true,
+        //为了避免 left、right 两边复用一个SideDivider，导致如果要指定不同的颜色的话，会后者覆盖前者的问题，则每一边都单独创建SideDivider
+        //items 的 右Divider，为dividerWidthDpOrPxValue的一半值，相邻两item合起来即间隔dividerWidthDpOrPxValue
+        SideDivider oneColumnRightHalfDivider = new SideDivider(true,
                 dividerWidthDpOrPxValue / 2.0f,
                 0,
                 0,
                 dividerColor);
+
+        SideDivider oneColumnLeftHalfDivider = new SideDivider(true,
+                dividerWidthDpOrPxValue / 2.0f,
+                0,
+                0,
+                dividerColor);
+
+//        //列与列间距(每个item绘制一半)，该间距为相等的
+//        SideDivider perColumnHalfDivider = new SideDivider(true,
+//                dividerWidthDpOrPxValue / 2.0f,
+//                0,
+//                0,
+//                dividerColor);
 
         //行与行间距(每个item绘制一半)，该间距默认与 dividerWidthDpOrPxValue 相等
         SideDivider perRowHalfDivider = new SideDivider(true,
@@ -139,10 +153,17 @@ public class GridItemDivider extends XColorWidthDivider {
                 }
             }
         }
-        xSidesDivider.withBottomSideDivider(isNeedDrawTopDivider ? perRowHalfDivider : justBottomSideDivider)//每个item有底部Divider
-                     .withTopSideDivider(isNeedDrawTopDivider ? perRowHalfDivider : null)
-                     .withRightSideDivider(perColumnHalfDivider)
-                     .withLeftSideDivider(perColumnHalfDivider);
+        SideDivider itemBottomSideDivider = new SideDivider();
+        itemBottomSideDivider.copySrcSideDivider(perRowHalfDivider);
+        SideDivider itemTopSideDivider = new SideDivider();
+        itemTopSideDivider.copySrcSideDivider(perRowHalfDivider);
+
+//        xSidesDivider.withBottomSideDivider(isNeedDrawTopDivider ? perRowHalfDivider : justBottomSideDivider)//每个item有底部Divider
+//                     .withTopSideDivider(isNeedDrawTopDivider ? perRowHalfDivider : null)
+        xSidesDivider.withBottomSideDivider(isNeedDrawTopDivider ? itemBottomSideDivider : justBottomSideDivider)//每个item有底部Divider
+                     .withTopSideDivider(isNeedDrawTopDivider ? itemTopSideDivider : null)
+                     .withRightSideDivider(oneColumnRightHalfDivider)
+                     .withLeftSideDivider(oneColumnLeftHalfDivider);
 
         int curRowIndex = itemPosition / gridSpanCount;//==0时为第一行
         debugInfo("-->getItemDivider() curRowIndex = " + curRowIndex + " totalRowCount = " + totalRowCount + " itemPosition = " + itemPosition
