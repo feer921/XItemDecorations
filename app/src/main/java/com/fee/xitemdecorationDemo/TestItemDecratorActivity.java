@@ -1,10 +1,14 @@
 package com.fee.xitemdecorationDemo;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import android.view.View;
+
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.fee.xitemdecoration.GridItemDivider;
 import com.fee.xitemdecoration.SideDivider;
@@ -26,6 +30,12 @@ public class TestItemDecratorActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recyclerview);
+        findViewById(R.id.btn_test).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(TestItemDecratorActivity.this,TestOfficialItemDecratorAct.class));
+            }
+        });
         RecyclerView recyclerView = findViewById(R.id.recyclerview);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(gridLayoutManager);
@@ -57,7 +67,7 @@ public class TestItemDecratorActivity extends AppCompatActivity {
                 ;
         recyclerView.addItemDecoration(gridItemDivider);
 //        recyclerView.addItemDecoration(divider);
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration();
+        DividerItemDecoration2 dividerItemDecoration = new DividerItemDecoration2();
 //        recyclerView.addItemDecoration(dividerItemDecoration);
 
         TestAdapter adapter = new TestAdapter();

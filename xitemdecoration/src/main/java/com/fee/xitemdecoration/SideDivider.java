@@ -1,6 +1,7 @@
 package com.fee.xitemdecoration;
 
-import android.support.annotation.ColorInt;
+
+import androidx.annotation.ColorInt;
 
 /**
  * ******************(^_^)***********************<br>

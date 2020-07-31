@@ -27,6 +27,9 @@
         <activity android:name=".TestItemDecratorActivity"
 
             />
+        <activity android:name=".TestOfficialItemDecratorAct"
+
+            />
     </application>
 
 </manifest>

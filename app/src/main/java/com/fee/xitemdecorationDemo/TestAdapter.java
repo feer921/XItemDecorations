@@ -1,11 +1,15 @@
 package com.fee.xitemdecorationDemo;
 
-import android.support.annotation.NonNull;
-import android.support.v7.widget.RecyclerView;
+import android.content.Context;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,8 +40,11 @@ public class TestAdapter extends RecyclerView.Adapter<TestAdapter.AViewHolder> {
     @NonNull
     @Override
     public AViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View itemView = View.inflate(parent.getContext(), R.layout.item_view, null);
-
+        Context context = parent.getContext();
+//        View itemView = View.inflate(parent.getContext(), R.layout.item_view, null);//如果 root参数为null,则布局中的layoutParams无效
+        View itemView = LayoutInflater.from(context).inflate(R.layout.item_view, parent, false);//这个是可以保留布局中的布局参数的
+//        ViewGroup.LayoutParams vlp = new ViewGroup.LayoutParams(-1, -2);
+//        itemView.setLayoutParams(vlp);
         return new AViewHolder(itemView);
     }
 
@@ -66,7 +73,7 @@ public class TestAdapter extends RecyclerView.Adapter<TestAdapter.AViewHolder> {
         return this.datas != null ? datas.size() : 0;
     }
 
-    public class AViewHolder extends RecyclerView.ViewHolder {
+    public static class AViewHolder extends RecyclerView.ViewHolder {
 
         public AViewHolder(View itemView) {
             super(itemView);

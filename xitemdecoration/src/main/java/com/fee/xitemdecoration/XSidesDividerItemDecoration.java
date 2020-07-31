@@ -4,12 +4,14 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.support.annotation.ColorInt;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.RecyclerView;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
 import android.view.View;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * ******************(^_^)***********************<br>
@@ -83,7 +85,7 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
     private static final int INDEX_SIDE_COLOR = INDEX_PADDING_END + 1;
 
     @Override
-    public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
+    public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
         super.getItemOffsets(outRect,view,parent,state);
         if (context == null) {
             context = view.getContext();
@@ -96,7 +98,6 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         int itemInAdapterPosition = parent.getChildAdapterPosition(view);
         int childLayoutPosition = parent.getChildLayoutPosition(view);
         debugInfo("-->getItemOffsets() itemInAdapterPosition = " + itemInAdapterPosition + " childLayoutPosition = " + childLayoutPosition);
-
         int itemPosition = ((RecyclerView.LayoutParams) view.getLayoutParams()).getViewLayoutPosition();
         totalItemViewCount = theRealItemsCount();
         if (totalItemViewCount == -1) {
@@ -144,12 +145,12 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
      * @param state The current state of RecyclerView
      */
     @Override
-    public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
+    public void onDraw(@NonNull Canvas c, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
         super.onDraw(c,parent,state);
         if (context == null) {
             context = parent.getContext();
             if (context != null) {
-                context.getApplicationContext();
+                context = context.getApplicationContext();
             }
         }
         //left, top, right, bottom
@@ -180,7 +181,7 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
                 SparseIntArray sideDividerInfos = extractSidesDividerInfos(is1stItem, isLastItem, divider.getLeftSideDivider());
 //                int[] sideDividerInfos = extractSideDividerInfos(divider.getLeftSideDivider());
                 if (sideDividerInfos != null) {
-                    drawChildLeftVertical(
+                    drawChildLeftVertical(i,
                             child,
                             c,
                             parent,
@@ -293,7 +294,7 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
      * @param startPaddingPx 矩形Divider 左边距
      * @param endPaddingPx 矩形Divider 右边距
      */
-    private void drawChildLeftVertical(View child, Canvas c, RecyclerView parent, @ColorInt int color, int lineWidthPx,
+    private void drawChildLeftVertical(int childIndex,View child, Canvas c, RecyclerView parent, @ColorInt int color, int lineWidthPx,
                                        int startPaddingPx, int endPaddingPx) {
         int topPadding = 0;
         int bottomPadding = 0;
@@ -336,6 +337,7 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         if (color != 0 || isNeedDrawTransparentRect) {
             c.drawRect(left, top, right, bottom, mPaint);
         }
+        debugInfo("--> drawChildLeftVertical() childIndex = " + childIndex + " drawRect = " + drawRect + "  lineWidthPx = " + lineWidthPx);
         extraDrawItemViewDividers(DIVIDER_POS_LEFT, child, c, parent, drawRect);
     }
 
@@ -573,7 +575,8 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
      * @param itemPosition 当前RecyclerView所绘制的item位置
      * @return 当前itemview可能需要绘制的XSidesDivider分隔线(装饰)
      */
-    public abstract @Nullable XSidesDivider getItemDivider(int itemPosition);
+    public abstract @Nullable
+    XSidesDivider getItemDivider(int itemPosition);
 
     /**
      * 提供当前itemView 的 各边Divider

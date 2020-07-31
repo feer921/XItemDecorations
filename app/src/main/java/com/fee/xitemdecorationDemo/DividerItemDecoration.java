@@ -1,109 +1,176 @@
 package com.fee.xitemdecorationDemo;
 
+import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Rect;
-import android.support.v4.view.ViewCompat;
-import android.support.v7.widget.RecyclerView;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.fee.xitemdecoration.L;
 
 /**
  * ******************(^_^)***********************<br>
  * User: fee(QQ/WeiXin:1176610771)<br>
- * Date: 2019/10/29<br>
- * Time: 14:16<br>
+ * Date: 2020/7/31<br>
+ * Time: 17:37<br>
  * <P>DESC:
- * 注：测试用的，毫无参考意义
+ * 完全复制 官方的
  * </p>
  * ******************(^_^)***********************
  */
-public class DividerItemDecoration extends RecyclerView.ItemDecoration {
-    private Paint mPaint;
+class DividerItemDecoration extends RecyclerView.ItemDecoration{
+    public static final int HORIZONTAL = LinearLayout.HORIZONTAL;
+    public static final int VERTICAL = LinearLayout.VERTICAL;
 
-    // 在构造函数里进行绘制的初始化，如画笔属性设置等
-    public DividerItemDecoration() {
+    private static final String TAG = "DividerItemDecoration";
+    private static final int[] ATTRS = new int[]{ android.R.attr.listDivider };
 
-        mPaint = new Paint();
-        mPaint.setColor(Color.GREEN);
-        // 画笔颜色设置为红色
+    private Drawable mDivider;
+
+    /**
+     * Current orientation. Either {@link #HORIZONTAL} or {@link #VERTICAL}.
+     */
+    private int mOrientation;
+
+    private final Rect mBounds = new Rect();
+
+    /**
+     * Creates a divider {@link RecyclerView.ItemDecoration} that can be used with a
+     *
+     * @param context Current context, it will be used to access resources.
+     * @param orientation Divider orientation. Should be {@link #HORIZONTAL} or {@link #VERTICAL}.
+     */
+    public DividerItemDecoration(Context context, int orientation) {
+        final TypedArray a = context.obtainStyledAttributes(ATTRS);
+        mDivider = a.getDrawable(0);
+        if (mDivider == null) {
+            Log.w(TAG, "@android:attr/listDivider was not set in the theme used for this "
+                    + "DividerItemDecoration. Please set that attribute all call setDrawable()");
+        }
+        a.recycle();
+        setOrientation(orientation);
     }
 
-    // 重写getItemOffsets（）方法
-    // 作用：设置矩形OutRect 与 Item 的间隔区域
-    @Override
-    public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
-        super.getItemOffsets(outRect, view, parent, state);
-
-
-        int itemPosition = parent.getChildAdapterPosition(view);
-        // 获得每个Item的位置
-
-        outRect.set(0, 0, 0, 10);
-//        // 第1个Item不绘制分割线
-//        if (itemPosition != 0) {
-//            outRect.set(0, 0, 0, 10);
-//            // 设置间隔区域为10px,即onDraw()可绘制的区域为10px
-//        }
+    /**
+     * Sets the orientation for this divider. This should be called if
+     * {@link RecyclerView.LayoutManager} changes orientation.
+     *
+     * @param orientation {@link #HORIZONTAL} or {@link #VERTICAL}
+     */
+    public void setOrientation(int orientation) {
+        if (orientation != HORIZONTAL && orientation != VERTICAL) {
+            throw new IllegalArgumentException(
+                    "Invalid orientation. It should be either HORIZONTAL or VERTICAL");
+        }
+        mOrientation = orientation;
     }
 
-    // 重写onDraw（）
-    // 作用:在间隔区域里绘制一个矩形，即分割线
+    /**
+     * Sets the {@link Drawable} for this divider.
+     *
+     * @param drawable Drawable that should be used as a divider.
+     */
+    public void setDrawable(@NonNull Drawable drawable) {
+        if (drawable == null) {
+            throw new IllegalArgumentException("Drawable cannot be null.");
+        }
+        mDivider = drawable;
+    }
+
+    /**
+     * @return the {@link Drawable} for this divider.
+     */
+    @Nullable
+    public Drawable getDrawable() {
+        return mDivider;
+    }
+
     @Override
     public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
-        super.onDraw(c, parent, state);
-
-        // 获取RecyclerView的Child view的个数
-        int childCount = parent.getChildCount();
-
-        // 遍历每个Item，分别获取它们的位置信息，然后再绘制对应的分割线
-        for ( int i = 0; i < childCount; i++ ) {
-            // 获取每个Item的位置
-            final View child = parent.getChildAt(i);
-            int index = parent.getChildAdapterPosition(child);
-//            // 第1个Item不需要绘制
-//            if ( index == 0 ) {
-//                continue;
-//            }
-
-            // 获取布局参数
-            final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child
-                    .getLayoutParams();
-            // 设置矩形(分割线)的宽度为10px
-            final int mDivider = 10;
-
-            // 根据子视图的位置 & 间隔区域，设置矩形（分割线）的2个顶点坐标(左上 & 右下)
-
-            // 矩形左上顶点 = (ItemView的左边界,ItemView的下边界)
-            // ItemView的左边界 = RecyclerView 的左边界 + paddingLeft距离 后的位置
-//            final int left = parent.getPaddingLeft();
-            Log.i("info", "--> onDraw() left margin = " + params.leftMargin);
-            final int left = child.getLeft() - params.leftMargin;
-//            final int left = 0;
-            // ItemView的下边界：ItemView 的 bottom坐标 + 距离RecyclerView底部距离 +translationY
-            final int top = child.getBottom() + params.bottomMargin +
-                    Math.round(ViewCompat.getTranslationY(child));
-
-            // 矩形右下顶点 = (ItemView的右边界,矩形的下边界)
-            // ItemView的右边界 = RecyclerView 的右边界减去 paddingRight 后的坐标位置
-//            final int right = parent.getWidth() - parent.getPaddingRight();
-            final int right = child.getRight();
-            // 绘制分割线的下边界 = ItemView的下边界+分割线的高度
-            final int bottom = top + mDivider;
-
-            Rect rect = new Rect(left, top, right, bottom);
-            Log.i("info", "-->  onDraw() rect = " + rect);
-
-            if (index == 1) {
-                mPaint.setColor(Color.BLACK);
-            }
-            else {
-                mPaint.setColor(Color.GREEN);
-            }
-
-            // 通过Canvas绘制矩形（分割线）
-            c.drawRect(left,top,right,bottom,mPaint);
+        Log.d(TAG, "-->onDraw() .......");
+        if (parent.getLayoutManager() == null || mDivider == null) {
+            return;
         }
+        if (mOrientation == VERTICAL) {
+            drawVertical(c, parent);
+        } else {
+            drawHorizontal(c, parent);
+        }
+    }
+
+    private void drawVertical(Canvas canvas, RecyclerView parent) {
+        canvas.save();
+        final int left;
+        final int right;
+        //noinspection AndroidLintNewApi - NewApi lint fails to handle overrides.
+        if (parent.getClipToPadding()) {
+            left = parent.getPaddingLeft();
+            right = parent.getWidth() - parent.getPaddingRight();
+            canvas.clipRect(left, parent.getPaddingTop(), right,
+                    parent.getHeight() - parent.getPaddingBottom());
+        } else {
+            left = 0;
+            right = parent.getWidth();
+        }
+
+        final int childCount = parent.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            final View child = parent.getChildAt(i);
+            parent.getDecoratedBoundsWithMargins(child, mBounds);
+            final int bottom = mBounds.bottom + Math.round(child.getTranslationY());
+            final int top = bottom - mDivider.getIntrinsicHeight();
+            mDivider.setBounds(left, top, right, bottom);
+            mDivider.draw(canvas);
+        }
+        canvas.restore();
+    }
+
+    private void drawHorizontal(Canvas canvas, RecyclerView parent) {
+        canvas.save();
+        final int top;
+        final int bottom;
+        //noinspection AndroidLintNewApi - NewApi lint fails to handle overrides.
+        if (parent.getClipToPadding()) {
+            top = parent.getPaddingTop();
+            bottom = parent.getHeight() - parent.getPaddingBottom();
+            canvas.clipRect(parent.getPaddingLeft(), top,
+                    parent.getWidth() - parent.getPaddingRight(), bottom);
+        } else {
+            top = 0;
+            bottom = parent.getHeight();
+        }
+
+        final int childCount = parent.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            final View child = parent.getChildAt(i);
+            parent.getLayoutManager().getDecoratedBoundsWithMargins(child, mBounds);
+            final int right = mBounds.right + Math.round(child.getTranslationX());
+            final int left = right - mDivider.getIntrinsicWidth();
+            mDivider.setBounds(left, top, right, bottom);
+            mDivider.draw(canvas);
+        }
+        canvas.restore();
+    }
+
+    @Override
+    public void getItemOffsets(Rect outRect, View view, RecyclerView parent,
+                               RecyclerView.State state) {
+        if (mDivider == null) {
+            outRect.set(0, 0, 0, 0);
+            return;
+        }
+        if (mOrientation == VERTICAL) {
+            outRect.set(0, 0, 0, mDivider.getIntrinsicHeight());
+        } else {
+            outRect.set(0, 0, mDivider.getIntrinsicWidth(), 0);
+        }
+        L.i(TAG, "-->getItemOffsets() after outRect =  " + outRect);
     }
 }
