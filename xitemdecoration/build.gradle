@@ -1,5 +1,14 @@
-apply plugin: 'com.android.library'
 
+plugins{
+    id "com.jfrog.bintray" version "1.8.5"
+    id 'maven-publish'
+}
+group = 'com.fee.xitemdecoration'
+version = "1.0.0"
+apply{ ObjectConfigurationAction action ->
+    plugin 'com.android.library'
+    from 'publish.gradle'
+}
 android {
     compileSdkVersion 29
 
@@ -28,3 +37,8 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
 }
+//apply {ObjectConfigurationAction action ->
+//    action.from('publish.gradle')
+//}
+
+
