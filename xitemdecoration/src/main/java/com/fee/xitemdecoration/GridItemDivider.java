@@ -1,7 +1,17 @@
 package com.fee.xitemdecoration;
 
 
+import android.graphics.Rect;
+import android.view.View;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * ******************(^_^)***********************<br>
@@ -16,6 +26,10 @@ import androidx.annotation.Nullable;
  * ******************(^_^)***********************
  */
 public class GridItemDivider extends XColorWidthDivider {
+    /**
+     * 当前网络布局的 列数(垂直方向时)
+     * 当前网络布局的 行数(水平方向时)
+     */
     protected int gridSpanCount = 1;
 
     /**
@@ -97,6 +111,115 @@ public class GridItemDivider extends XColorWidthDivider {
             return curItemPosition % gridSpanCount;
         }
         return -1;
+    }
+
+    private boolean isAdjustedPadding = false;
+    @Override
+    protected void prepareToGetItemOffsets(@NonNull Rect outRect, @NonNull View curItemView, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+        super.prepareToGetItemOffsets(outRect, curItemView, parent, state);
+        if (!isAdjustedPadding) {
+            float leftSpaceOfItems = firstColumnLeftDividerDpOrPxValue;
+            float topSpaceOfItems = firstRowTopDividerDpOrPxValue;
+            float rightSpaceOfItems = lastColumnRightDividerDpOrPxValue;
+            float bottomSpaceOfItems = lastRowBottomDividerWidthDpOrPxValue;
+            if (leftSpaceOfItems > 0 || topSpaceOfItems > 0 || rightSpaceOfItems > 0 || bottomSpaceOfItems > 0) {
+                //当这些值如果有被外部给设置了的，那么就代表本类会自动来调整 RecyclerView的内边距
+                int parentSrcPaddingLeft = parent.getPaddingLeft();// RecyclerView 本身的 左内边距
+
+                int parentSrcPaddingRight = parent.getPaddingRight();// RecyclerView 本身的 右内边距
+
+                int parentSrcPaddingTop = parent.getPaddingTop();//RecyclerView 本身 的 上内边距
+
+                int parentSrcPaddingBottom = parent.getPaddingBottom();//RecyclerView 本身的 底内边距
+                parentSrcPaddingLeft += leftSpaceOfItems;
+                parentSrcPaddingTop += topSpaceOfItems;
+                parentSrcPaddingRight += rightSpaceOfItems;
+                parentSrcPaddingBottom += bottomSpaceOfItems;
+                parent.setPadding(parentSrcPaddingLeft, parentSrcPaddingTop, parentSrcPaddingRight, parentSrcPaddingBottom);
+                isAdjustedPadding = true;
+            }
+        }
+    }
+
+    /**
+     * 这里是真正的去 实现获取 当前 curItemView的 XSideDivider
+     * {@link RecyclerView} 网格 绘制原理/流程：
+     * 网格垂直方向(spanCount = 3)：
+     * --- 0 ---   --- 1 ---  --- 2 ---
+     * --- 3 ---   --- 4 ---  --- 5 ---
+     * 网格水平方向(spanCount = 3)：
+     * --- 0 ---   --- 3 ---
+     * --- 1 ---   --- 4 ---
+     * --- 2 ---
+     * 1、在RecyclerView有效 宽度[垂直方向列表时]或者 高度[水平方向列表时] 根据外部设定的 spanCount,来等分每个 itemView所占用 宽度、高度
+     * 2、在绝大多数场景下，每个itemView的宽高基本上是一致的,相邻两个 itemView的 divider的间距也是一致的
+     * 3、当要达到 每个itemView的宽或者高 一致 并且每相邻两个 itemView的间距一致的情况下，则需要 单个Span的宽 = itemView的宽 + (左 + 右) divider的宽
+     * 也即 每个 itemView的 左+右 的 divider的间隔之和都要相等
+     * @param curItemView 当前的 itemView
+     * @param parent      当前的 RecyclerView
+     * @param state       当前的 RecyclerView 的状态信息
+     * @return XSideDivider
+     */
+    @Nullable
+    @Override
+    protected XSidesDivider getItemDivider(@NonNull View curItemView, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+        if (gridSpanCount <= 0) {
+            return null;
+        }
+        XSidesDivider xSidesDivider = null;
+
+        int itemPosition = parent.getChildLayoutPosition(curItemView);//当前 itemView在列表适配器的 position
+
+        float leftSpaceOfItems = firstColumnLeftDividerDpOrPxValue;
+        float topSpaceOfItems = firstRowTopDividerDpOrPxValue;
+        float rightSpaceOfItems = lastColumnRightDividerDpOrPxValue;
+        float bottomSpaceOfItems = lastRowBottomDividerWidthDpOrPxValue;
+
+        int curItemHoldSpanCount = 1;// 当前 itemView所占的 span的个数，默认一般都是1，也有外部可以指定某个 itemView 占用不同的Span个数
+
+        float dividerSpaceValue = dividerWidthDpOrPxValue;
+        float trisectionSpaceValue = dividerSpaceValue / 3.0f;//三等分 itemView的间隔
+        float twoThirdsSpaceValue = trisectionSpaceValue * 2;//三分之二的 divider 间隔
+
+        GridLayoutManager.SpanSizeLookup spanSizeLookup = null;
+        //因为每个 itemView
+        RecyclerView.LayoutManager layoutManager = parent.getLayoutManager();
+        if (layoutManager != null) {
+            if (layoutManager instanceof GridLayoutManager) {
+                GridLayoutManager llm = (GridLayoutManager) layoutManager;
+                mLayoutOrientation = llm.getOrientation();
+                spanSizeLookup = llm.getSpanSizeLookup();
+                if (spanSizeLookup != null) {
+                    curItemHoldSpanCount = spanSizeLookup.getSpanSize(itemPosition);
+                }
+            }
+        }
+        //当前网格列表的方向是否为 垂直方向的
+        boolean isVerticalOrientation = mLayoutOrientation == RecyclerView.VERTICAL;
+        //是否当前 itemView 占用了全
+        boolean isCurItemTakeFullSpan = curItemHoldSpanCount == gridSpanCount;
+        xSidesDivider = new XSidesDivider();
+        float aDividerPaddingStart = dividerPaddingStartDpOrPxValue;
+        float aDividerPaddingEnd = dividerPaddingEndDpOrPxValue;
+        //三分之二的所指定的 item间隔 的 Divider，当当前的 itemView 为第一列[右]、第一行[底]或者最后一列[左]、最后一行[上]时 的间隔距离；
+        SideDivider towThirdsSpaceDivider = new SideDivider(true, twoThirdsSpaceValue, aDividerPaddingStart, aDividerPaddingEnd, dividerColor);
+        //三分之一的所指定的 item 间隔 的Divider,当非第一列、非最后一列、非第一行、非最后一行时 item
+        SideDivider oneThirdSpaceDivider = new SideDivider(true, trisectionSpaceValue, aDividerPaddingStart, aDividerPaddingEnd, dividerColor);
+        //根据当前列表的方向来 判断当前 itemView所处的 列序、行序
+
+        int columnIndexOfItem = 0;
+        int rowIndexOfItem = 0;
+
+        if (isCurItemTakeFullSpan) {
+            if (isVerticalOrientation) {
+
+            }
+        }
+        else {
+
+        }
+        debugInfo("-->getItemDivider() xSidesDivider = " + xSidesDivider.getRightSideDivider() + " itemPosition = " + itemPosition);
+        return xSidesDivider != null ? xSidesDivider : super.getItemDivider(curItemView, parent, state);
     }
 
     @Nullable

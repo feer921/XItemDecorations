@@ -7,7 +7,7 @@ group = 'com.fee.xitemdecoration'
 version = "1.0.0"
 apply{ ObjectConfigurationAction action ->
     plugin 'com.android.library'
-    from 'publish.gradle'
+//    from 'publish.gradle'
 }
 android {
     compileSdkVersion 29

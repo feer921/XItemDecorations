@@ -7,8 +7,8 @@ import android.graphics.Rect;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
 import android.view.View;
-
 import androidx.annotation.ColorInt;
+import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
@@ -69,6 +69,17 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
      * 本次被装饰的RecyclerView总共有多少个ItemView
      */
     protected int totalItemViewCount;
+
+    /**
+     * added by fee : 当RecyclerView进行绘制ItemDecroation时，是否需要 执行本类的 {@link #onDraw(Canvas, RecyclerView, RecyclerView.State)}
+     * 因为有些情况下(比如 divider的颜色本身为透明的，则并不需要绘制出来)
+     */
+    protected boolean isNeedResumeOnDraw = true;
+
+    /**
+     * 当前 RecyclerView 的布局的绘制方向
+     */
+    protected int mLayoutOrientation = RecyclerView.VERTICAL;
     public XSidesDividerItemDecoration(Context context) {
         this.context = context;
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -85,20 +96,21 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
     private static final int INDEX_SIDE_COLOR = INDEX_PADDING_END + 1;
 
     @Override
-    public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
-        super.getItemOffsets(outRect,view,parent,state);
+    public void getItemOffsets(@NonNull Rect outRect, @NonNull View curItemView, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+        super.getItemOffsets(outRect,curItemView,parent,state);
         if (context == null) {
-            context = view.getContext();
+            context = curItemView.getContext();
             if (context != null) {
                 context = context.getApplicationContext();
             }
         }
+        prepareToGetItemOffsets(outRect, curItemView, parent, state);
         //outRect 看源码可知这里只是把Rect类型的outRect作为一个封装了left,right,top,bottom的数据结构,
         //作为传递left,right,top,bottom的偏移值来用的
-        int itemInAdapterPosition = parent.getChildAdapterPosition(view);
-        int childLayoutPosition = parent.getChildLayoutPosition(view);
-        debugInfo("-->getItemOffsets() itemInAdapterPosition = " + itemInAdapterPosition + " childLayoutPosition = " + childLayoutPosition);
-        int itemPosition = ((RecyclerView.LayoutParams) view.getLayoutParams()).getViewLayoutPosition();
+        int itemInAdapterPosition = parent.getChildAdapterPosition(curItemView);
+        int childLayoutPosition = parent.getChildLayoutPosition(curItemView);
+//        int itemPosition = ((RecyclerView.LayoutParams) curItemView.getLayoutParams()).getViewLayoutPosition();
+        int itemPosition = childLayoutPosition;
         totalItemViewCount = theRealItemsCount();
         if (totalItemViewCount == -1) {
             RecyclerView.Adapter adapter = parent.getAdapter();
@@ -112,8 +124,7 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         if (totalItemViewCount <= 0) {
             return;
         }
-        XSidesDivider divider = providerItemDivider(itemPosition);
-
+        XSidesDivider divider = providerItemDivider(curItemView,parent,state);
         if (divider == null) {
             divider = provideDefXSideDividerBuilder().buildXSidesDivider();
         }
@@ -128,13 +139,17 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
 
         bottom = gainTheSideDividerWithPx(divider.getBottomSideDivider());
 
-        Rect srcRect = new Rect(outRect);
+//        Rect srcRect = new Rect(outRect);
         outRect.set(left, top, right, bottom);
-        if (isDebugLog) {
-            L.d(TAG, "-->getItemOffsets() srcRect = " + srcRect + " cur rect = " + outRect);
-        }
+        debugInfo("-->getItemOffsets() itemInAdapterPosition = " + itemInAdapterPosition
+                +" childLayoutPosition = " + childLayoutPosition
+                + " cur rect = " + outRect
+        );
     }
 
+    protected void prepareToGetItemOffsets(@NonNull Rect outRect, @NonNull View curItemView, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+        //here do nothing...
+    }
     /**
      * Draw any appropriate decorations into the Canvas supplied to the RecyclerView.
      * Any content drawn by this method will be drawn before the item views are drawn,
@@ -162,18 +177,20 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
                 totalItemViewCount = adapter.getItemCount();
             }
         }
-        debugInfo("-->onDraw()  childCount = " + visibleChildCount + " totalItemsCount = " + totalItemViewCount
+        debugInfo("-->onDraw()  visibleChildCount = " + visibleChildCount + " totalItemViewCount = " + totalItemViewCount
+                + " isNeedResumeOnDraw = " + isNeedResumeOnDraw
         );
-        if (totalItemViewCount <= 0) {//to do 要判断这个？？
+        if (totalItemViewCount <= 0 || !isNeedResumeOnDraw) {//to do 要判断这个？？
             return;
         }
+        //下面去绘制每一个 itemView 的 divider
         for (int i = 0; i < visibleChildCount; i++) {
             View child = parent.getChildAt(i);
-            int itemViewPos = parent.getChildAdapterPosition(child);
-//            int itemViewPos = parent.getChildLayoutPosition(child);
+//            int itemViewPos = parent.getChildAdapterPosition(child);
+            int itemViewPos = parent.getChildLayoutPosition(child);
 
 //            int itemPosition = ((RecyclerView.LayoutParams) child.getLayoutParams()).getViewLayoutPosition();
-            XSidesDivider divider = providerItemDivider(itemViewPos);
+            XSidesDivider divider = providerItemDivider(child, parent, state);
             boolean is1stItem = itemViewPos == 0;
             boolean isLastItem = (itemViewPos == totalItemViewCount - 1);
             if (divider != null) {
@@ -574,30 +591,69 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
      * 在RecyclerView绘制时，根据当前绘制的itemPosition来获取当前是否有Divider
      * @param itemPosition 当前RecyclerView所绘制的item位置
      * @return 当前itemview可能需要绘制的XSidesDivider分隔线(装饰)
+     * @deprecated 可以重写 {@link #getItemDivider(View, RecyclerView, RecyclerView.State)}
      */
-    public abstract @Nullable
-    XSidesDivider getItemDivider(int itemPosition);
+    public abstract @Nullable XSidesDivider getItemDivider(int itemPosition);
 
     /**
-     * 提供当前itemView 的 各边Divider
-     * 此方法子类也可以重写掉
-     * 注：先去缓存里找有没有对应的XSidesDivider
-     * @param curItemPosition 当前RecyclerView中的itemView
-     * @return XSidesDivider
+     * 这里是真正的去 实现获取 当前 curItemView的 XSideDivider
+     * @param curItemView 当前的 itemView
+     * @param parent 当前的 RecyclerView
+     * @param state 当前的 RecyclerView 的状态信息
+     * @return XSideDivider
      */
-    protected XSidesDivider providerItemDivider(int curItemPosition) {
+    protected @Nullable XSidesDivider getItemDivider(@NonNull View curItemView, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+        //为了兼容，这里默认还是调用
+        int childViewPos = parent.getChildLayoutPosition(curItemView);
+        return getItemDivider(childViewPos);
+    }
+
+    /**
+     * 提供当前 itemView的各边 Divider信息
+     * 此方法子类也可以重写掉
+     * 注：如果{@link #isCanUseCacheXSidesDivider} is true 先去缓存里找有没有对应的 XSidesDivider
+     * @param curItemView RecyclerView中当前需要 测量 的 子 View
+     * @param parent 当前的 RecyclerView
+     * @param state 当前RecyclerView的状态
+     * @return XSideDivider
+     */
+    protected XSidesDivider providerItemDivider(@NonNull View curItemView, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+        int curItemViewPos = parent.getChildLayoutPosition(curItemView);
+        if (RecyclerView.NO_POSITION == curItemViewPos) {
+            return null;
+        }
         XSidesDivider xSidesDivider = null;
         if (xSidesDividerMapItemPosition != null && isCanUseCacheXSidesDivider) {
-            xSidesDivider = xSidesDividerMapItemPosition.get(curItemPosition);
+            xSidesDivider = xSidesDividerMapItemPosition.get(curItemViewPos);
         }
         if (xSidesDivider == null) {
-            xSidesDivider = getItemDivider(curItemPosition);
+            xSidesDivider = getItemDivider(curItemView, parent, state);
             if (isCanUseCacheXSidesDivider) {
-                xSidesDividerMapItemPosition.put(curItemPosition, xSidesDivider);
+                xSidesDividerMapItemPosition.put(curItemViewPos, xSidesDivider);
             }
         }
         return xSidesDivider;
     }
+//    /**
+//     * 提供当前itemView 的 各边Divider
+//     * 此方法子类也可以重写掉
+//     * 注：先去缓存里找有没有对应的XSidesDivider
+//     * @param curItemPosition 当前RecyclerView中的itemView
+//     * @return XSidesDivider
+//     */
+//    protected XSidesDivider providerItemDivider(int curItemPosition) {
+//        XSidesDivider xSidesDivider = null;
+//        if (xSidesDividerMapItemPosition != null && isCanUseCacheXSidesDivider) {
+//            xSidesDivider = xSidesDividerMapItemPosition.get(curItemPosition);
+//        }
+//        if (xSidesDivider == null) {
+//            xSidesDivider = getItemDivider(curItemPosition);
+//            if (isCanUseCacheXSidesDivider) {
+//                xSidesDividerMapItemPosition.put(curItemPosition, xSidesDivider);
+//            }
+//        }
+//        return xSidesDivider;
+//    }
     /**
      * 提供一个默认的XSideDividerBuilder来创建XSideDivider,以免为空
      * @return
@@ -654,6 +710,20 @@ public abstract class XSidesDividerItemDecoration extends RecyclerView.ItemDecor
         return this;
     }
 
+    public XSidesDividerItemDecoration setNeedResumeOnDraw(boolean isNeedResumeOnDraw) {
+        this.isNeedResumeOnDraw = isNeedResumeOnDraw;
+        return this;
+    }
+
+    /**
+     * 设置 当前 RecyclerView 列表的绘制方向
+     * @param layoutOrientation 水平方向、或者 垂直方向
+     * @return self
+     */
+    public XSidesDividerItemDecoration setLayoutOrientation(@IntRange(from = RecyclerView.HORIZONTAL, to = RecyclerView.VERTICAL) int layoutOrientation) {
+        mLayoutOrientation = layoutOrientation;
+        return this;
+    }
     protected int theRealItemsCount() {
         if (iItemsCounter != null) {
             return iItemsCounter.countItemsCount();
