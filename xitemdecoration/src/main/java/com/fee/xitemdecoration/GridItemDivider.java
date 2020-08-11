@@ -1,17 +1,13 @@
 package com.fee.xitemdecoration;
 
 
-import android.graphics.Rect;
+import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * ******************(^_^)***********************<br>
@@ -76,6 +72,7 @@ public class GridItemDivider extends XColorWidthDivider {
 
     /**
      * 根据当前Adapter中 列表数据集的数量来计算网格布局时，总共需要的行数
+     *
      * @return 计算出的总行数
      */
     protected int calculateTotalRow() {
@@ -91,6 +88,7 @@ public class GridItemDivider extends XColorWidthDivider {
 
     /**
      * 根据当前的 item所处的位置 curItemPosition 来计算判断当前item所处的行序
+     *
      * @param curItemPosition 当前 item所处的 position 从0开始计
      * @return 当前 item 所处的 行数；从 0开始计(即0为第一行)
      */
@@ -100,9 +98,11 @@ public class GridItemDivider extends XColorWidthDivider {
         }
         return -1;
     }
+
     /**
      * 根据 网格指定的列数 以及当前 item所处的 position 来计算判定，当前item所处的列序
      * 从0开始计(即 0 = 第1列),(gridSpanCount - 1) 为最后一列
+     *
      * @param curItemPosition 当前item所处的 position 从0开始计
      * @return 该 item 所处的网格列表中的列序，从0始计，但为(gridSpanCount - 1)时代表最后一列
      */
@@ -113,33 +113,33 @@ public class GridItemDivider extends XColorWidthDivider {
         return -1;
     }
 
-    private boolean isAdjustedPadding = false;
-    @Override
-    protected void prepareToGetItemOffsets(@NonNull Rect outRect, @NonNull View curItemView, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
-        super.prepareToGetItemOffsets(outRect, curItemView, parent, state);
-        if (!isAdjustedPadding) {
-            float leftSpaceOfItems = firstColumnLeftDividerDpOrPxValue;
-            float topSpaceOfItems = firstRowTopDividerDpOrPxValue;
-            float rightSpaceOfItems = lastColumnRightDividerDpOrPxValue;
-            float bottomSpaceOfItems = lastRowBottomDividerWidthDpOrPxValue;
-            if (leftSpaceOfItems > 0 || topSpaceOfItems > 0 || rightSpaceOfItems > 0 || bottomSpaceOfItems > 0) {
-                //当这些值如果有被外部给设置了的，那么就代表本类会自动来调整 RecyclerView的内边距
-                int parentSrcPaddingLeft = parent.getPaddingLeft();// RecyclerView 本身的 左内边距
-
-                int parentSrcPaddingRight = parent.getPaddingRight();// RecyclerView 本身的 右内边距
-
-                int parentSrcPaddingTop = parent.getPaddingTop();//RecyclerView 本身 的 上内边距
-
-                int parentSrcPaddingBottom = parent.getPaddingBottom();//RecyclerView 本身的 底内边距
-                parentSrcPaddingLeft += leftSpaceOfItems;
-                parentSrcPaddingTop += topSpaceOfItems;
-                parentSrcPaddingRight += rightSpaceOfItems;
-                parentSrcPaddingBottom += bottomSpaceOfItems;
-                parent.setPadding(parentSrcPaddingLeft, parentSrcPaddingTop, parentSrcPaddingRight, parentSrcPaddingBottom);
-                isAdjustedPadding = true;
-            }
-        }
-    }
+//    private boolean isAdjustedPadding = false;
+//    @Override
+//    protected void prepareToGetItemOffsets(@NonNull Rect outRect, @NonNull View curItemView, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+//        super.prepareToGetItemOffsets(outRect, curItemView, parent, state);
+//        if (!isAdjustedPadding) {
+//            float leftSpaceOfItems = firstColumnLeftDividerDpOrPxValue;
+//            float topSpaceOfItems = firstRowTopDividerDpOrPxValue;
+//            float rightSpaceOfItems = lastColumnRightDividerDpOrPxValue;
+//            float bottomSpaceOfItems = lastRowBottomDividerWidthDpOrPxValue;
+//            if (leftSpaceOfItems > 0 || topSpaceOfItems > 0 || rightSpaceOfItems > 0 || bottomSpaceOfItems > 0) {
+//                //当这些值如果有被外部给设置了的，那么就代表本类会自动来调整 RecyclerView的内边距
+//                int parentSrcPaddingLeft = parent.getPaddingLeft();// RecyclerView 本身的 左内边距
+//
+//                int parentSrcPaddingRight = parent.getPaddingRight();// RecyclerView 本身的 右内边距
+//
+//                int parentSrcPaddingTop = parent.getPaddingTop();//RecyclerView 本身 的 上内边距
+//
+//                int parentSrcPaddingBottom = parent.getPaddingBottom();//RecyclerView 本身的 底内边距
+//                parentSrcPaddingLeft += leftSpaceOfItems;
+//                parentSrcPaddingTop += topSpaceOfItems;
+//                parentSrcPaddingRight += rightSpaceOfItems;
+//                parentSrcPaddingBottom += bottomSpaceOfItems;
+//                parent.setPadding(parentSrcPaddingLeft, parentSrcPaddingTop, parentSrcPaddingRight, parentSrcPaddingBottom);
+//                isAdjustedPadding = true;
+//            }
+//        }
+//    }
 
     /**
      * 这里是真正的去 实现获取 当前 curItemView的 XSideDivider
@@ -155,6 +155,7 @@ public class GridItemDivider extends XColorWidthDivider {
      * 2、在绝大多数场景下，每个itemView的宽高基本上是一致的,相邻两个 itemView的 divider的间距也是一致的
      * 3、当要达到 每个itemView的宽或者高 一致 并且每相邻两个 itemView的间距一致的情况下，则需要 单个Span的宽 = itemView的宽 + (左 + 右) divider的宽
      * 也即 每个 itemView的 左+右 的 divider的间隔之和都要相等
+     *
      * @param curItemView 当前的 itemView
      * @param parent      当前的 RecyclerView
      * @param state       当前的 RecyclerView 的状态信息
@@ -163,23 +164,28 @@ public class GridItemDivider extends XColorWidthDivider {
     @Nullable
     @Override
     protected XSidesDivider getItemDivider(@NonNull View curItemView, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
-        if (gridSpanCount <= 0) {
+        if (gridSpanCount <= 0 || parent.getAdapter() == null) {
             return null;
         }
+        int itemCount = parent.getAdapter().getItemCount();
+        if (itemCount == 1) return null;//当getItemCount==1时本次计算时不准确的
+
         XSidesDivider xSidesDivider = null;
 
-        int itemPosition = parent.getChildLayoutPosition(curItemView);//当前 itemView在列表适配器的 position
+        int itemPosition = parent.getChildAdapterPosition(curItemView);//当前 itemView在列表适配器的 position
 
-        float leftSpaceOfItems = firstColumnLeftDividerDpOrPxValue;
-        float topSpaceOfItems = firstRowTopDividerDpOrPxValue;
-        float rightSpaceOfItems = lastColumnRightDividerDpOrPxValue;
-        float bottomSpaceOfItems = lastRowBottomDividerWidthDpOrPxValue;
+        float leftSpaceOfItems = 0;
+        float topSpaceOfItems = 0;
+        float rightSpaceOfItems = 0;
+        float bottomSpaceOfItems = 0;
 
         int curItemHoldSpanCount = 1;// 当前 itemView所占的 span的个数，默认一般都是1，也有外部可以指定某个 itemView 占用不同的Span个数
+        int curItemSpanIndex = 0;
+        int curItemSpanGroupIndex = 0;
 
-        float dividerSpaceValue = dividerWidthDpOrPxValue;
-        float trisectionSpaceValue = dividerSpaceValue / 3.0f;//三等分 itemView的间隔
-        float twoThirdsSpaceValue = trisectionSpaceValue * 2;//三分之二的 divider 间隔
+//        float dividerSpaceValue = dividerWidthDpOrPxValue;
+//        float trisectionSpaceValue = dividerSpaceValue / 3.0f;//三等分 itemView的间隔
+//        float twoThirdsSpaceValue = trisectionSpaceValue * 2;//三分之二的 divider 间隔
 
         GridLayoutManager.SpanSizeLookup spanSizeLookup = null;
         //因为每个 itemView
@@ -191,35 +197,149 @@ public class GridItemDivider extends XColorWidthDivider {
                 spanSizeLookup = llm.getSpanSizeLookup();
                 if (spanSizeLookup != null) {
                     curItemHoldSpanCount = spanSizeLookup.getSpanSize(itemPosition);
+                    curItemSpanIndex = spanSizeLookup.getSpanIndex(itemPosition, gridSpanCount);
+                    curItemSpanGroupIndex = spanSizeLookup.getSpanGroupIndex(itemPosition, gridSpanCount);
                 }
             }
         }
         //当前网格列表的方向是否为 垂直方向的
         boolean isVerticalOrientation = mLayoutOrientation == RecyclerView.VERTICAL;
         //是否当前 itemView 占用了全
-        boolean isCurItemTakeFullSpan = curItemHoldSpanCount == gridSpanCount;
+//        boolean isCurItemTakeFullSpan = curItemHoldSpanCount == gridSpanCount;
         xSidesDivider = new XSidesDivider();
-        float aDividerPaddingStart = dividerPaddingStartDpOrPxValue;
-        float aDividerPaddingEnd = dividerPaddingEndDpOrPxValue;
+//        float aDividerPaddingStart = dividerPaddingStartDpOrPxValue;
+//        float aDividerPaddingEnd = dividerPaddingEndDpOrPxValue;
         //三分之二的所指定的 item间隔 的 Divider，当当前的 itemView 为第一列[右]、第一行[底]或者最后一列[左]、最后一行[上]时 的间隔距离；
-        SideDivider towThirdsSpaceDivider = new SideDivider(true, twoThirdsSpaceValue, aDividerPaddingStart, aDividerPaddingEnd, dividerColor);
+//        SideDivider towThirdsSpaceDivider = new SideDivider(true, twoThirdsSpaceValue, aDividerPaddingStart, aDividerPaddingEnd, dividerColor);
         //三分之一的所指定的 item 间隔 的Divider,当非第一列、非最后一列、非第一行、非最后一行时 item
-        SideDivider oneThirdSpaceDivider = new SideDivider(true, trisectionSpaceValue, aDividerPaddingStart, aDividerPaddingEnd, dividerColor);
+//        SideDivider oneThirdSpaceDivider = new SideDivider(true, trisectionSpaceValue, aDividerPaddingStart, aDividerPaddingEnd, dividerColor);
         //根据当前列表的方向来 判断当前 itemView所处的 列序、行序
 
-        int columnIndexOfItem = 0;
-        int rowIndexOfItem = 0;
+//        int columnIndexOfItem = 0;
+//        int rowIndexOfItem = 0;
 
-        if (isCurItemTakeFullSpan) {
-            if (isVerticalOrientation) {
-
+//        if (isCurItemTakeFullSpan) {
+        if (isVerticalOrientation) {
+            int sizeAvg = (int) ((dividerWidthDpOrPxValue * (gridSpanCount - 1) + firstColumnLeftDividerDpOrPxValue + lastColumnRightDividerDpOrPxValue) * 1f / gridSpanCount);
+            leftSpaceOfItems = computeLeft(curItemSpanIndex, sizeAvg);
+            rightSpaceOfItems = computeRight(curItemSpanIndex, sizeAvg);
+            if (isFirstRow(spanSizeLookup, itemPosition, curItemSpanGroupIndex)) {//第一行
+                topSpaceOfItems = firstRowTopDividerDpOrPxValue;
+            } else {
+                topSpaceOfItems = dividerWidthDpOrPxValue / 2;
+            }
+            if (isLastRow(spanSizeLookup, itemPosition, itemCount)) {//最后一行
+                bottomSpaceOfItems = lastRowBottomDividerWidthDpOrPxValue;
+            } else {
+                bottomSpaceOfItems = dividerWidthDpOrPxValue / 2;
             }
         }
+//        }
         else {
-
+            int sizeAvg = (int) ((dividerWidthDpOrPxValue * (gridSpanCount - 1) + firstRowTopDividerDpOrPxValue + lastRowBottomDividerWidthDpOrPxValue) * 1f / gridSpanCount);
+            topSpaceOfItems = computeTop(curItemSpanIndex, sizeAvg);
+            bottomSpaceOfItems = computeBottom(curItemSpanIndex, sizeAvg);
+            if (isFirstRow(spanSizeLookup, itemPosition, curItemSpanGroupIndex)) {//第一列
+                leftSpaceOfItems = firstColumnLeftDividerDpOrPxValue;
+            } else {
+                leftSpaceOfItems = dividerWidthDpOrPxValue / 2;
+            }
+            if (isLastRow(spanSizeLookup, itemPosition, itemCount)) {//最后一列
+                rightSpaceOfItems = lastColumnRightDividerDpOrPxValue;
+            } else {
+                rightSpaceOfItems = dividerWidthDpOrPxValue / 2;
+            }
         }
+        xSidesDivider.withLeftSideDivider(buildSideDivider(leftSpaceOfItems))
+                .withRightSideDivider(buildSideDivider(rightSpaceOfItems))
+                .withTopSideDivider(buildSideDivider(topSpaceOfItems))
+                .withBottomSideDivider(buildSideDivider(bottomSpaceOfItems));
+        Log.e(getClass().getSimpleName(), "第" + curItemSpanGroupIndex + "行" + "第" + curItemSpanIndex + "列----" + "left=" + leftSpaceOfItems + "-right=" + rightSpaceOfItems + "-top=" + topSpaceOfItems + "-bottom=" + bottomSpaceOfItems);
+//        Log.e(getClass().getSimpleName(), "第" + curItemSpanGroupIndex + "行" + "第" + curItemSpanIndex + "列----" + "left=" + leftSpaceOfItems + "-right=" + rightSpaceOfItems);
         debugInfo("-->getItemDivider() xSidesDivider = " + xSidesDivider.getRightSideDivider() + " itemPosition = " + itemPosition);
         return xSidesDivider != null ? xSidesDivider : super.getItemDivider(curItemView, parent, state);
+    }
+
+    public boolean isFirstRow(GridLayoutManager.SpanSizeLookup spanSizeLookup, int itemPosition, int curItemSpanGroupIndex) {
+        if (spanSizeLookup == null) {
+            return curItemSpanGroupIndex == 0;
+        }
+        return spanSizeLookup.getSpanGroupIndex(itemPosition, gridSpanCount) == spanSizeLookup.getSpanGroupIndex(0, gridSpanCount);
+    }
+
+    public boolean isLastRow(GridLayoutManager.SpanSizeLookup spanSizeLookup, int itemPosition, int itemCount) {
+        if (spanSizeLookup == null || itemCount <= 0) {
+            return false;
+        }
+        return spanSizeLookup.getSpanGroupIndex(itemPosition, gridSpanCount) == spanSizeLookup.getSpanGroupIndex(itemCount - 1, gridSpanCount);
+    }
+
+    private boolean isFirstColumn(int curItemSpanIndex) {
+        return curItemSpanIndex == 0;
+    }
+
+    private boolean isLastColumn(int curItemSpanIndex, int curItemHoldSpanCount) {
+        return curItemSpanIndex + curItemHoldSpanCount == gridSpanCount;
+    }
+
+    private SideDivider buildSideDivider(float value) {
+        return new SideDivider().withNeedDraw(true).withSideWidthValue(value).withDividerColor(dividerColor).withNeedDrawAtLastPos(true);
+    }
+
+    private float computeLeft(int spanIndex, int sizeAvg) {
+        if (spanIndex == 0) {
+            return firstColumnLeftDividerDpOrPxValue;
+        } else if (spanIndex == gridSpanCount - 1) {
+            return sizeAvg - lastColumnRightDividerDpOrPxValue;
+        } else {
+            if (spanIndex >= gridSpanCount / 2) {
+                return sizeAvg - computeRight(spanIndex, sizeAvg);
+            } else {
+                return dividerWidthDpOrPxValue - computeRight(spanIndex - 1, sizeAvg);
+            }
+        }
+    }
+
+    private float computeRight(int spanIndex, int sizeAvg) {
+        if (spanIndex == 0) {
+            return sizeAvg - firstColumnLeftDividerDpOrPxValue;
+        } else if (spanIndex == gridSpanCount - 1) {
+            return lastColumnRightDividerDpOrPxValue;
+        } else {
+            if (spanIndex >= gridSpanCount / 2) {
+                return dividerWidthDpOrPxValue - computeLeft(spanIndex + 1, sizeAvg);
+            } else {
+                return sizeAvg - computeLeft(spanIndex, sizeAvg);
+            }
+        }
+    }
+
+    private float computeTop(int spanIndex, int sizeAvg) {
+        if (spanIndex == 0) {
+            return firstRowTopDividerDpOrPxValue;
+        } else if (spanIndex == gridSpanCount - 1) {
+            return sizeAvg - lastRowBottomDividerWidthDpOrPxValue;
+        } else {
+            if (spanIndex >= gridSpanCount / 2) {
+                return sizeAvg - computeBottom(spanIndex, sizeAvg);
+            } else {
+                return dividerWidthDpOrPxValue - computeBottom(spanIndex - 1, sizeAvg);
+            }
+        }
+    }
+
+    private float computeBottom(int spanIndex, int sizeAvg) {
+        if (spanIndex == 0) {
+            return sizeAvg - firstRowTopDividerDpOrPxValue;
+        } else if (spanIndex == gridSpanCount - 1) {
+            return lastRowBottomDividerWidthDpOrPxValue;
+        } else {
+            if (spanIndex >= gridSpanCount / 2) {
+                return dividerWidthDpOrPxValue - computeTop(spanIndex + 1, sizeAvg);
+            } else {
+                return sizeAvg - computeTop(spanIndex, sizeAvg);
+            }
+        }
     }
 
     @Nullable
@@ -285,9 +405,9 @@ public class GridItemDivider extends XColorWidthDivider {
 //        xSidesDivider.withBottomSideDivider(isNeedDrawTopDivider ? perRowHalfDivider : justBottomSideDivider)//每个item有底部Divider
 //                     .withTopSideDivider(isNeedDrawTopDivider ? perRowHalfDivider : null)
         xSidesDivider.withBottomSideDivider(isNeedDrawTopDivider ? itemBottomSideDivider : justBottomSideDivider)//每个item有底部Divider
-                     .withTopSideDivider(isNeedDrawTopDivider ? itemTopSideDivider : null)
-                     .withRightSideDivider(oneColumnRightHalfDivider)
-                     .withLeftSideDivider(oneColumnLeftHalfDivider);
+                .withTopSideDivider(isNeedDrawTopDivider ? itemTopSideDivider : null)
+                .withRightSideDivider(oneColumnRightHalfDivider)
+                .withLeftSideDivider(oneColumnLeftHalfDivider);
 
         int curRowIndex = itemPosition / gridSpanCount;//==0时为第一行
         debugInfo("-->getItemDivider() curRowIndex = " + curRowIndex + " totalRowCount = " + totalRowCount + " itemPosition = " + itemPosition
@@ -298,8 +418,7 @@ public class GridItemDivider extends XColorWidthDivider {
                 SideDivider assignTopSideDivider = new SideDivider(true, firstRowTopDividerDpOrPxValue, 0, 0,
                         dividerColor);
                 xSidesDivider.withTopSideDivider(assignTopSideDivider);
-            }
-            else {//默认第一行 不需要绘制 顶部 divider
+            } else {//默认第一行 不需要绘制 顶部 divider
                 xSidesDivider.withTopSideDivider(null);
             }
         }
@@ -307,8 +426,7 @@ public class GridItemDivider extends XColorWidthDivider {
         if (curRowIndex == totalRowCount - 1) {//最后一行不需要绘制底部？也可以绘制,不影响显示效果
             if (!isNeedDrawBottomDividerAtLastRow) {
                 xSidesDivider.withBottomSideDivider(null);
-            }
-            else {//最后一行需要绘制 divider
+            } else {//最后一行需要绘制 divider
                 float theLastRowSideDividerValue = perRowDividerDpOrPxValue > 0 ? perRowDividerDpOrPxValue : dividerWidthDpOrPxValue;
                 //要 构造一个新的 SideDivider,不然会影响 perRowHalfDivider
                 SideDivider bottomSideDivider = new SideDivider(true,
@@ -346,12 +464,10 @@ public class GridItemDivider extends XColorWidthDivider {
                 );
                 lastColumnDivider.withNeedDrawAtLastPos(true);
                 xSidesDivider.withRightSideDivider(lastColumnDivider);
-            }
-            else {
+            } else {
                 xSidesDivider.withRightSideDivider(null);
             }
-        }
-        else {
+        } else {
             if (posModResult == 1) {//第一列默认不需要左Divider
                 if (firstColumnLeftDividerDpOrPxValue > 0) {
                     SideDivider firstColumnSideDivider = new SideDivider(true,
@@ -361,8 +477,7 @@ public class GridItemDivider extends XColorWidthDivider {
                             dividerColor);
                     firstColumnSideDivider.withNeedDrawAt1stPos(true);
                     xSidesDivider.withLeftSideDivider(firstColumnSideDivider);
-                }
-                else {
+                } else {
                     xSidesDivider.withLeftSideDivider(null);
                 }
             }
@@ -374,6 +489,7 @@ public class GridItemDivider extends XColorWidthDivider {
     /**
      * 配置RecyclerView 网格列表 的 items是否绘制 Top位置的Divider
      * def: false 即 items 默认不绘制 Top位置的Divider，而是由 items的 Bottom位置的Divider来 替代上、下间距
+     *
      * @param needDrawTopDivider true: 让items绘制Top位置的Divider，此时 divider的值为{@link #dividerWidthDpOrPxValue}的一半
      * @return self
      */
@@ -393,6 +509,7 @@ public class GridItemDivider extends XColorWidthDivider {
      * 场景为：RecyclerView 本身不设置 底padding或者 margin的情况下，让最后一行的 items绘制 底部 divider
      * 以满足列表 底部间距的需求
      * 注：不配置的情况下，默认最后一行的 items 底部 Divider不绘制
+     *
      * @param lastRowBottomDividerWidth 最后一行的 items的 Bottom位置的Divider的值
      * @return self
      */
@@ -408,6 +525,7 @@ public class GridItemDivider extends XColorWidthDivider {
      * 场景为：RecyclerView 本身不设置 上padding或者 margin的情况下，让第一行的 items绘制 顶部 divider
      * 以满足列表 顶部间距的需求
      * 注：不配置的情况下，默认第一行的 items Top Divider不绘制
+     *
      * @param firstRowTopDividerDpOrPxValue 第一行 items的顶部 Divider的值
      * @return self
      */
@@ -422,6 +540,7 @@ public class GridItemDivider extends XColorWidthDivider {
      * 场景为：RecyclerView的 行方向的 items间距 divider与 列(垂直)方向的items上、下间距不一致的情况下，
      * 保持使用{@link #dividerWidthDpOrPxValue} 作为行方向的的 items间距，而使用此方法配置竖、垂直、上下行的间距值
      * 注：不配置的情况下，上下行间距和 左右列间距的值是相等的，使用{@link #dividerWidthDpOrPxValue}
+     *
      * @param perRowDividerDpOrPxValue 网格列表布局的 上、下行的间距 divider 值
      * @return self
      */
@@ -436,7 +555,8 @@ public class GridItemDivider extends XColorWidthDivider {
      * 场景为：RecyclerView本身不设置 左padding或者左margin的情况下，让第一列的 items 绘制左侧divider
      * 以满足列表左侧间距需求
      * 注：不配置情况下，默认第一列的 items 左侧都不绘制
-     * @param firstColumnLeftDividerDpOrPxValue  RecyclerView网格列表 第一列items的左侧Divider的值
+     *
+     * @param firstColumnLeftDividerDpOrPxValue RecyclerView网格列表 第一列items的左侧Divider的值
      * @return self
      */
     public GridItemDivider setFirstColumnLeftDividerValue(float firstColumnLeftDividerDpOrPxValue) {
@@ -450,7 +570,8 @@ public class GridItemDivider extends XColorWidthDivider {
      * 场景为：RecyclerView本身不设置 右padding或者margin的情况下，让最后一列的 items 绘制右侧divider
      * 以满足列表右侧间距需求
      * 注：不配置情况下，默认最后一列的 items 右侧都不绘制
-     * @param lastColumnRightDividerDpOrPxValue  RecyclerView网格列表 最后一列items的右侧Divider的值
+     *
+     * @param lastColumnRightDividerDpOrPxValue RecyclerView网格列表 最后一列items的右侧Divider的值
      * @return self
      */
     public GridItemDivider setLastColumnRightDividerValue(float lastColumnRightDividerDpOrPxValue) {
